@@ -87,7 +87,7 @@ import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
   * 6) Once you're done with your experiments, you can stop this example via `Ctrl-C`. If needed,
   * also stop the Kafka broker (`Ctrl-C`), and only then stop the ZooKeeper instance (`Ctrl-C`).
   **/
-object WordCountScalaExample extends App {
+object WordCount extends App {
 
   import org.apache.kafka.streams.scala.Serdes._
   import org.apache.kafka.streams.scala.ImplicitConversions._
@@ -101,7 +101,7 @@ object WordCountScalaExample extends App {
   }
 
   val builder = new StreamsBuilder()
-  val textLines: KStream[String, String] = builder.stream[String, String]("streams-plaintext-input")
+  val textLines: KStream[String, String] = builder.stream[String, String]("test")
   val wordCounts: KTable[String, Long] = textLines
     .flatMapValues(_.toLowerCase.split("\\W+"))
     .groupBy((_, word) => word)

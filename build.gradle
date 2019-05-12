@@ -1,0 +1,17 @@
+plugins {
+    id 'scala'
+    id 'idea'
+}
+
+group 'de.hpi.msd'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.scala-lang:scala-library:2.12.8'
+    implementation 'org.apache.kafka:kafka-streams-scala_2.12:2.2.0'
+    implementation 'org.slf4j:slf4j-simple:1.7.26'
+}
