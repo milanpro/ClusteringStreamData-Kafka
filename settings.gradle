@@ -1,2 +1,5 @@
 rootProject.name = 'MSD_Clustering_Stream_Data'
+include 'StreamVisualizer'
+include 'WordCount'
+include 'DataGenerator'
 

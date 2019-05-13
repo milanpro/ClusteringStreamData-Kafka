@@ -8,7 +8,6 @@ import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
 /**
   * Demonstrates, using the high-level KStream DSL, how to implement the WordCount program that
   * computes a simple word occurrence histogram from an input text.
-  * Same as [[WordCountLambdaExample]] but in Scala.
   *
   * In this example, the input stream reads from a topic named "streams-plaintext-input", where the values of
   * messages represent lines of text; and the histogram output is written to topic

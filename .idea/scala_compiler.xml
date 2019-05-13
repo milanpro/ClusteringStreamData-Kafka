@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ScalaCompilerConfiguration">
-    <profile name="Gradle 1" modules="MSD_Clustering_Stream_Data_main,MSD_Clustering_Stream_Data_test">
+    <profile name="Gradle 1" modules="MSD_Clustering_Stream_Data.main,MSD_Clustering_Stream_Data_main">
+      <option name="postfixOps" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <parameters>
+        <parameter value="-target:jvm-1.8" />
+      </parameters>
+    </profile>
+    <profile name="Gradle 2" modules="MSD_Clustering_Stream_Data.DataGenerator.main,MSD_Clustering_Stream_Data.StreamVisualizer.main,MSD_Clustering_Stream_Data.WordCount.main">
       <option name="deprecationWarnings" value="true" />
       <option name="uncheckedWarnings" value="true" />
       <parameters>
