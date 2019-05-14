@@ -4,7 +4,6 @@ import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.serialization.StringSerializer
 
 import scala.util.Random
-import scala.collection.mutable.ListBuffer
 
 object DataGenerator extends App {
 
