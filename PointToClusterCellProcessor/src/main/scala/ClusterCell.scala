@@ -1,0 +1,1 @@
+class ClusterCell(seedPoint: Point, timelyDensity: Double, dependentDistance: Double)

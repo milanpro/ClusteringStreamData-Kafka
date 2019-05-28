@@ -10,29 +10,25 @@ import org.knowm.xchart.{XChartPanel, XYChart, XYChartBuilder}
 import org.knowm.xchart.XYSeries.XYSeriesRenderStyle
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.util.control.Breaks._
 
 object StreamPlotter extends App {
 
   def makeChart = {
-    val chart = new XYChartBuilder()
-      .width(600)
-      .height(500)
-      .title("Stream Plot")
-      .xAxisTitle("X")
-      .yAxisTitle("Y")
+    val chart = (new XYChartBuilder() width 600 height 500 title "Stream Plot" xAxisTitle "X" yAxisTitle "Y")
       .build
 
-    chart.getStyler.setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Scatter)
+    chart.getStyler setDefaultSeriesRenderStyle XYSeriesRenderStyle.Scatter
 
-    chart.addSeries("Points", new Array[Double](1))
+    chart addSeries("Points", new Array[Double](1))
 
     chart
   }
 
   val properties = new Properties()
-  properties.put("bootstrap.servers", "localhost:9092")
-  properties.put("group.id", "stream-generator")
+  properties put("bootstrap.servers", "localhost:9092")
+  properties put("group.id", "stream-generator")
 
   val stringDes = new StringDeserializer
   val pointDes = new PointDeserializer
@@ -43,34 +39,39 @@ object StreamPlotter extends App {
   var chartPanel: JPanel = _
 
   javax.swing.SwingUtilities.invokeLater(() => {
-    val frame: JFrame = new JFrame("Advanced Example")
-    frame.setLayout(new BorderLayout)
-    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
+    val frame = new JFrame("Advanced Example")
+    frame setLayout new BorderLayout
+    frame setDefaultCloseOperation JFrame.EXIT_ON_CLOSE
 
     chartPanel = new XChartPanel[XYChart](chart)
-    frame.add(chartPanel, BorderLayout.CENTER)
+    frame add(chartPanel, BorderLayout.CENTER)
 
-    frame.pack()
-    frame.setVisible(true)
+    frame pack()
+    frame setVisible true
   })
 
-  kafkaConsumer.subscribe(Pattern.compile("streams-wordcount-output"))
+  kafkaConsumer subscribe (Pattern compile "streams-wordcount-output")
+
+  val ringbuffer = mutable.Queue[Point]()
 
   while (true) breakable {
     val results = kafkaConsumer.poll(Duration.ofSeconds(10))
 
-    if (results.count() == 0) {
-      break
-    }
+    if (results.count() == 0) break
 
-    val points = results.asScala.map(_.value())
+    val points: Iterable[Point] = results.asScala.map(_.value())
 
-    val xvals = points.map(_.x).toArray
-    val yvals = points.map(_.y).toArray
+    points foreach (point => {
+      if (ringbuffer.length >= 500) ringbuffer.dequeue()
+      ringbuffer += point
+    })
 
-    javax.swing.SwingUtilities.invokeLater(() => {
-      chart.updateXYSeries("Points", xvals, yvals, null)
-      chartPanel.repaint()
+    val xvals = ringbuffer.map(_.x).toArray
+    val yvals = ringbuffer.map(_.y).toArray
+
+    javax.swing.SwingUtilities invokeLater (() => {
+      chart updateXYSeries("Points", xvals, yvals, null)
+      chartPanel repaint()
     })
   }
 }

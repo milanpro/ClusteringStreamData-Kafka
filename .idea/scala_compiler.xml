@@ -9,7 +9,7 @@
         <parameter value="-target:jvm-1.8" />
       </parameters>
     </profile>
-    <profile name="Gradle 2" modules="MSD_Clustering_Stream_Data.DataGenerator.main,MSD_Clustering_Stream_Data.StreamVisualizer.main,MSD_Clustering_Stream_Data.WordCount.main">
+    <profile name="Gradle 2" modules="MSD_Clustering_Stream_Data.DataGenerator.main,MSD_Clustering_Stream_Data.DataGenerator.test,MSD_Clustering_Stream_Data.PointToClusterCellProcessor.main,MSD_Clustering_Stream_Data.PointToClusterCellProcessor.test,MSD_Clustering_Stream_Data.StreamVisualizer.main,MSD_Clustering_Stream_Data.StreamVisualizer.test,MSD_Clustering_Stream_Data.WordCount.main,MSD_Clustering_Stream_Data.WordCount.test">
       <option name="deprecationWarnings" value="true" />
       <option name="uncheckedWarnings" value="true" />
       <parameters>
