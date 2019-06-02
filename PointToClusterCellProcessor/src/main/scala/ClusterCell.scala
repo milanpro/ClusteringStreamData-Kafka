@@ -1,1 +1,1 @@
-class ClusterCell(seedPoint: Point, timelyDensity: Double, dependentDistance: Double)
+case class ClusterCell(seedPoint: Point, timelyDensity: Double, dependentDistance: Option[Double])

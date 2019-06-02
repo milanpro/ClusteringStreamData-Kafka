@@ -11,7 +11,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.scala-lang:scala-library:2.12.8'
+    implementation 'org.scala-lang:scala-library:2.13.0-RC2'
 
     implementation 'org.apache.kafka:kafka-streams-scala_2.12:2.2.0'
 
