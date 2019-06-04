@@ -48,7 +48,7 @@ class PointToClusterCellProcessor extends Processor[String, Point] {
     context.schedule(
       duration,
       PunctuationType.WALL_CLOCK_TIME,
-      timestamp => {
+      _ => {
         val points = pointBuffer.all.asScala
         points.foreach(point => processPoint(point.key, point.value))
         context.commit()
