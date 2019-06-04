@@ -13,12 +13,5 @@ repositories {
 dependencies {
     implementation 'org.scala-lang:scala-library:2.12.8'
 
-    implementation 'org.apache.kafka:kafka-clients:2.2.0'
     implementation 'org.apache.kafka:kafka_2.12:2.2.0'
-
-    implementation 'org.knowm.xchart:xchart:3.5.4'
-
-    implementation 'org.slf4j:slf4j-simple:1.7.26'
-
-    implementation project(':Serdes')
 }

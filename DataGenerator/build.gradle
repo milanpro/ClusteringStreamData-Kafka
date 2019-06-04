@@ -17,4 +17,6 @@ dependencies {
     implementation 'org.apache.kafka:kafka_2.12:2.2.0'
 
     implementation 'org.slf4j:slf4j-simple:1.7.26'
+
+    implementation project(':Serdes')
 }
