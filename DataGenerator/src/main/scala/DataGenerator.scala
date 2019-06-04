@@ -13,23 +13,31 @@ object DataGenerator extends App {
   val stringSer = new StringSerializer
   val pointSer = new PointSerializer
 
-  val kafkaProducer = new KafkaProducer[String, Point](properties, stringSer, pointSer)
+  val kafkaProducer =
+    new KafkaProducer[String, Point](properties, stringSer, pointSer)
 
   val id = 0
 
-  var distributions: List[((Double, Double),(Double, Double))] = List()
+  var distributions: List[((Double, Double), (Double, Double))] = List()
 
-  val distriCount = (Random nextInt 3) + 2
+  val distriCount = (Random.nextInt(3)) + 2
   for (_ <- 0 to distriCount) {
-    distributions = ((Random.nextDouble()*25, Random.nextDouble()*100),(Random.nextDouble()*25, Random.nextDouble()*100)) :: distributions
+    distributions = (
+      (Random.nextDouble() * 25, Random.nextDouble() * 100),
+      (Random.nextDouble() * 25, Random.nextDouble() * 100)
+    ) :: distributions
   }
 
   while (true) {
-    val index = Random nextInt distriCount
+    val index = Random.nextInt(distriCount)
     val distrib = distributions(index)
-    val point = Point(Random.nextGaussian() * distrib._1._1 + distrib._1._2, Random.nextGaussian() * distrib._2._1 + distrib._2._2)
-    val record = new ProducerRecord[String, Point]("streams-point-input",s"$id", point)
+    val point = Point(
+      Random.nextGaussian() * distrib._1._1 + distrib._1._2,
+      Random.nextGaussian() * distrib._2._1 + distrib._2._2
+    )
+    val record =
+      new ProducerRecord[String, Point]("streams-point-input", s"$id", point)
     Thread.sleep(10)
-    kafkaProducer send record
+    kafkaProducer.send(record)
   }
 }

@@ -100,7 +100,8 @@ object WordCount extends App {
   }
 
   val builder = new StreamsBuilder()
-  val textLines: KStream[String, String] = builder.stream[String, String]("test")
+  val textLines: KStream[String, String] =
+    builder.stream[String, String]("test")
   val wordCounts: KTable[String, Long] = textLines
     .flatMapValues(_.toLowerCase.split("\\W+"))
     .groupBy((_, word) => word)

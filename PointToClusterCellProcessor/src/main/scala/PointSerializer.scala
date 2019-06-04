@@ -5,9 +5,7 @@ import org.apache.kafka.common.errors.SerializationException
 import org.apache.kafka.common.serialization.Serializer
 
 class PointSerializer extends Serializer[Point] {
-  override def configure(configs: util.Map[String, _], isKey: Boolean): Unit = {
-
-  }
+  override def configure(configs: util.Map[String, _], isKey: Boolean): Unit = {}
 
   override def serialize(topic: String, data: Point): Array[Byte] = {
     if (data == null) {
@@ -17,18 +15,17 @@ class PointSerializer extends Serializer[Point] {
     try {
       // 2 doubles = 16 bytes
       val bytes = new Array[Byte](16)
-      val buffer = ByteBuffer wrap bytes
+      val buffer = ByteBuffer.wrap(bytes)
 
-      buffer putDouble data.x
-      buffer putDouble data.y
+      buffer.putDouble(data.x)
+      buffer.putDouble(data.y)
 
       bytes
     } catch {
-      case _: Throwable => throw new SerializationException("Error serializing value");
+      case _: Throwable =>
+        throw new SerializationException("Error serializing value");
     }
   }
 
-  override def close(): Unit = {
-
-  }
+  override def close(): Unit = {}
 }

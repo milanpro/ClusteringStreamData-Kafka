@@ -16,41 +16,47 @@ import scala.util.control.Breaks._
 object StreamPlotter extends App {
 
   def makeChart = {
-    val chart = (new XYChartBuilder() width 600 height 500 title "Stream Plot" xAxisTitle "X" yAxisTitle "Y")
+    val chart = new XYChartBuilder()
+      .width(600)
+      .height(500)
+      .title("Stream Plot")
+      .xAxisTitle("X")
+      .yAxisTitle("Y")
       .build
 
-    chart.getStyler setDefaultSeriesRenderStyle XYSeriesRenderStyle.Scatter
+    chart.getStyler.setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Scatter)
 
-    chart addSeries("Points", new Array[Double](1))
+    chart.addSeries("Points", new Array[Double](1))
 
     chart
   }
 
   val properties = new Properties()
-  properties put("bootstrap.servers", "localhost:9092")
-  properties put("group.id", "stream-generator")
+  properties.put("bootstrap.servers", "localhost:9092")
+  properties.put("group.id", "stream-generator")
 
   val stringDes = new StringDeserializer
   val pointDes = new PointDeserializer
 
-  val kafkaConsumer = new KafkaConsumer[String, Point](properties, stringDes, pointDes)
+  val kafkaConsumer =
+    new KafkaConsumer[String, Point](properties, stringDes, pointDes)
 
   val chart = makeChart
   var chartPanel: JPanel = _
 
   javax.swing.SwingUtilities.invokeLater(() => {
     val frame = new JFrame("Advanced Example")
-    frame setLayout new BorderLayout
-    frame setDefaultCloseOperation JFrame.EXIT_ON_CLOSE
+    frame.setLayout(new BorderLayout)
+    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
 
     chartPanel = new XChartPanel[XYChart](chart)
-    frame add(chartPanel, BorderLayout.CENTER)
+    frame.add(chartPanel, BorderLayout.CENTER)
 
-    frame pack()
-    frame setVisible true
+    frame.pack()
+    frame.setVisible(true)
   })
 
-  kafkaConsumer subscribe (Pattern compile "streams-wordcount-output")
+  kafkaConsumer.subscribe(Pattern.compile("streams-wordcount-output"))
 
   val ringbuffer = mutable.Queue[Point]()
 
@@ -61,7 +67,7 @@ object StreamPlotter extends App {
 
     val points: Iterable[Point] = results.asScala.map(_.value())
 
-    points foreach (point => {
+    points.foreach(point => {
       if (ringbuffer.length >= 500) ringbuffer.dequeue()
       ringbuffer += point
     })
@@ -69,9 +75,9 @@ object StreamPlotter extends App {
     val xvals = ringbuffer.map(_.x).toArray
     val yvals = ringbuffer.map(_.y).toArray
 
-    javax.swing.SwingUtilities invokeLater (() => {
-      chart updateXYSeries("Points", xvals, yvals, null)
-      chartPanel repaint()
+    javax.swing.SwingUtilities.invokeLater(() => {
+      chart.updateXYSeries("Points", xvals, yvals, null)
+      chartPanel.repaint()
     })
   }
 }
