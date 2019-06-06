@@ -2,6 +2,7 @@ import java.util.Properties
 
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.serialization.StringSerializer
+import types.point.{Point, PointSerializer}
 
 import scala.util.Random
 
@@ -20,7 +21,7 @@ object DataGenerator extends App {
 
   var distributions: List[((Double, Double), (Double, Double))] = List()
 
-  val distriCount = (Random.nextInt(3)) + 2
+  val distriCount = Random.nextInt(3) + 2
   for (_ <- 0 to distriCount) {
     distributions = (
       (Random.nextDouble() * 25, Random.nextDouble() * 100),

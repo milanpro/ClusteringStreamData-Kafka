@@ -1,14 +1,19 @@
 import java.time.Duration
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 import org.apache.kafka.streams.processor.{
   Processor,
   ProcessorContext,
-  PunctuationType
+  PunctuationType,
+  Punctuator
 }
 import org.apache.kafka.streams.state.KeyValueStore
+import types.cell.ClusterCell
+import types.point.Point
 
 import scala.jdk.CollectionConverters._
+import Ordering.Double.TotalOrdering
 
 /*
  * https://docs.confluent.io/current/streams/developer-guide/processor-api.html#defining-a-stream-processor
@@ -18,17 +23,16 @@ import scala.jdk.CollectionConverters._
  * TODO: Choosing of a useful r
  */
 
-val r = 1
-
-val a = 0.998
-
-val lambda = 1
-
-val steppingtime = 1
-
-val decay = scala.math.pow(a, lambda * steppingtime)
-
 class PointToClusterCellProcessor extends Processor[String, Point] {
+  val r = 1
+
+  val a = 0.998
+
+  val lambda = 1
+
+  val steppingtime = 1
+
+  val decay = scala.math.pow(a, lambda * steppingtime)
 
   private var context: ProcessorContext = _
   private var clusterCells: KeyValueStore[String, ClusterCell] = _
@@ -37,22 +41,22 @@ class PointToClusterCellProcessor extends Processor[String, Point] {
   override def init(context: ProcessorContext): Unit = {
     this.context = context
     clusterCells = context
-      .getStateStore("ClusterCellStore")
+      .getStateStore("cluster-buffer-store")
       .asInstanceOf[KeyValueStore[String, ClusterCell]]
     pointBuffer = context
-      .getStateStore("PointBuffer")
+      .getStateStore("point-buffer-store")
       .asInstanceOf[KeyValueStore[String, Point]]
 
-    val duration = new Duration().withSeconds(1)
+    val duration = Duration.of(1, ChronoUnit.SECONDS)
 
     context.schedule(
       duration,
       PunctuationType.WALL_CLOCK_TIME,
-      timestamp => {
+      (timestamp => {
         val points = pointBuffer.all.asScala
         points.foreach(point => processPoint(point.key, point.value))
         context.commit()
-      }
+      }): Punctuator
     )
   }
 

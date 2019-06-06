@@ -1,10 +1,12 @@
-import java.nio.ByteBuffer
+package types.point
+
 import java.util
 
-import org.apache.kafka.common.errors.SerializationException
+import com.google.gson.Gson
 import org.apache.kafka.common.serialization.Deserializer
 
 class PointDeserializer extends Deserializer[Point] {
+  var gson = new Gson
   override def configure(configs: util.Map[String, _], isKey: Boolean): Unit = {}
 
   override def deserialize(topic: String, data: Array[Byte]): Point = {
@@ -12,17 +14,7 @@ class PointDeserializer extends Deserializer[Point] {
       return null
     }
 
-    try {
-      val buffer = ByteBuffer.wrap(data)
-
-      val x = buffer getDouble
-      val y = buffer getDouble
-
-      Point(x, y)
-    } catch {
-      case _: Throwable =>
-        throw new SerializationException("Error deserializing value");
-    }
+    gson.fromJson(new String(data, "utf-8"), Point.getClass)
   }
 
   override def close(): Unit = {}

@@ -3,11 +3,12 @@ import java.time.Duration
 import java.util.Properties
 import java.util.regex.Pattern
 
-import javax.swing.{JFrame, JLabel, JPanel, SwingConstants}
+import javax.swing.{JFrame, JPanel}
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.serialization.StringDeserializer
-import org.knowm.xchart.{XChartPanel, XYChart, XYChartBuilder}
 import org.knowm.xchart.XYSeries.XYSeriesRenderStyle
+import org.knowm.xchart.{XChartPanel, XYChart, XYChartBuilder}
+import types.point.{Point, PointDeserializer}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -56,7 +57,7 @@ object StreamPlotter extends App {
     frame.setVisible(true)
   })
 
-  kafkaConsumer.subscribe(Pattern.compile("streams-wordcount-output"))
+  kafkaConsumer.subscribe(Pattern.compile("streams-point-input"))
 
   val ringbuffer = mutable.Queue[Point]()
 
