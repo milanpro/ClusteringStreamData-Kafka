@@ -4,4 +4,3 @@ include 'WordCount'
 include 'DataGenerator'
 include 'PointToClusterCellProcessor'
 include 'Serdes'
-

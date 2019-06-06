@@ -2,12 +2,10 @@ package types.cell
 
 import java.util
 
-import com.google.gson.Gson
+import org.apache.commons.lang3.SerializationUtils
 import org.apache.kafka.common.serialization.Serializer
 
 class ClusterCellSerializer extends Serializer[ClusterCell] {
-  val gson = new Gson
-
   override def configure(configs: util.Map[String, _], isKey: Boolean): Unit = {}
 
   override def serialize(topic: String, data: ClusterCell): Array[Byte] = {
@@ -15,7 +13,7 @@ class ClusterCellSerializer extends Serializer[ClusterCell] {
       return null
     }
 
-    gson.toJson(data).getBytes("utf-8")
+    SerializationUtils.serialize(data)
   }
 
   override def close(): Unit = {}

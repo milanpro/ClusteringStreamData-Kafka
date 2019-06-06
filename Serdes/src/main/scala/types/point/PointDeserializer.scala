@@ -2,11 +2,10 @@ package types.point
 
 import java.util
 
-import com.google.gson.Gson
+import org.apache.commons.lang3.SerializationUtils
 import org.apache.kafka.common.serialization.Deserializer
 
 class PointDeserializer extends Deserializer[Point] {
-  var gson = new Gson
   override def configure(configs: util.Map[String, _], isKey: Boolean): Unit = {}
 
   override def deserialize(topic: String, data: Array[Byte]): Point = {
@@ -14,7 +13,7 @@ class PointDeserializer extends Deserializer[Point] {
       return null
     }
 
-    gson.fromJson(new String(data, "utf-8"), Point.getClass)
+    SerializationUtils.deserialize[Point](data)
   }
 
   override def close(): Unit = {}

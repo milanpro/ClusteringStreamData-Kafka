@@ -2,11 +2,14 @@ import java.time.Duration
 import java.util.Properties
 
 import org.apache.kafka.common.serialization.Serdes.StringSerde
-import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.kafka.common.serialization.{
+  StringDeserializer,
+  StringSerializer
+}
 import org.apache.kafka.streams.processor.ProcessorSupplier
 import org.apache.kafka.streams.state.Stores
 import org.apache.kafka.streams.{KafkaStreams, StreamsConfig, Topology}
-import types.cell.ClusterCellSerde
+import types.cell.{ClusterCellSerde, ClusterCellSerializer}
 import types.point.{Point, PointDeserializer, PointSerde}
 
 object PointClusterer extends App {
@@ -39,7 +42,7 @@ object PointClusterer extends App {
       "points",
       new StringDeserializer,
       new PointDeserializer,
-      "streams-point-input"
+      "streams-points-input"
     )
     .addProcessor(
       "point-to-cluster-cell-processor",
@@ -49,6 +52,8 @@ object PointClusterer extends App {
     .addSink(
       "clusters-sink",
       "streams-clusters-input",
+      new StringSerializer,
+      new ClusterCellSerializer,
       "point-to-cluster-cell-processor"
     )
     .addStateStore(pointBufferStateStore, "point-to-cluster-cell-processor")

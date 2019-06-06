@@ -24,7 +24,7 @@ import Ordering.Double.TotalOrdering
  */
 
 class PointToClusterCellProcessor extends Processor[String, Point] {
-  val r = 1
+  val r = 10
 
   val a = 0.998
 

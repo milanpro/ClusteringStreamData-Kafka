@@ -37,7 +37,7 @@ object DataGenerator extends App {
       Random.nextGaussian() * distrib._2._1 + distrib._2._2
     )
     val record =
-      new ProducerRecord[String, Point]("streams-point-input", s"$id", point)
+      new ProducerRecord[String, Point]("streams-points-input", s"$id", point)
     Thread.sleep(10)
     kafkaProducer.send(record)
   }

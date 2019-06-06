@@ -4,3 +4,11 @@ plugins {
 
 group 'de.hpi.msd'
 version '1.0-SNAPSHOT'
+
+subprojects {
+    plugins.withType(ScalaPlugin).whenPluginAdded {
+        dependencies {
+            implementation 'org.scala-lang:scala-library:2.13.0-RC2'
+        }
+    }
+}
