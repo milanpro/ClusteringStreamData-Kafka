@@ -10,7 +10,8 @@ class ClusterCellSerde extends Serde[ClusterCell] {
 
   override def close(): Unit = ()
 
-  override def serializer(): Serializer[ClusterCell] = new ClusterCellSerializer
+  override def serializer(): Serializer[ClusterCell] =
+    new ClusterCellSerializer
 
   override def deserializer(): Deserializer[ClusterCell] =
     new ClusterCellDeserializer

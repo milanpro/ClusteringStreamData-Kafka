@@ -70,11 +70,11 @@ object StreamPlotter extends App {
   pointConsumer.subscribe(Pattern.compile("streams-points-input"))
 
   val ringbuffer = mutable.Queue[Point]()
-  val clustersFinal = mutable.Map[String, Point]()
+  val clustersFinal = mutable.Map[String, ClusterCell]()
 
   while (true) breakable {
     val pointResult = pointConsumer.poll(Duration.ofSeconds(1))
-    val clusterResult = clusterConsumer.poll(Duration.ofSeconds(1))
+    val clusterResult = clusterConsumer.poll(Duration.ofMillis(1))
 
     if (pointResult.count() == 0 && clusterResult.count() == 0) break
 
@@ -86,14 +86,21 @@ object StreamPlotter extends App {
     })
 
     clusterResult.asScala.foreach(
-      cell => clustersFinal.put(cell.key(), cell.value().seedPoint)
+      cell => {
+        if (cell.value == null) {
+          clustersFinal -= cell.key
+        } else {
+          clustersFinal.put(cell.key(), cell.value)
+        }
+      }
     )
 
     val xvalsPoints = ringbuffer.map(_.x).toArray
     val yvalsPoints = ringbuffer.map(_.y).toArray
 
-    val xvalsClusters = clustersFinal.values.map(_.x).toArray
-    val yvalsClusters = clustersFinal.values.map(_.y).toArray
+    //clustersFinal.values.foreach(cell => println(cell.timelyDensity))
+    val xvalsClusters = clustersFinal.values.map(_.seedPoint.x).toArray
+    val yvalsClusters = clustersFinal.values.map(_.seedPoint.y).toArray
 
     javax.swing.SwingUtilities.invokeLater(() => {
       chart.updateXYSeries("Points", xvalsPoints, yvalsPoints, null)

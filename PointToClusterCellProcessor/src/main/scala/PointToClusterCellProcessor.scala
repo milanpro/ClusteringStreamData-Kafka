@@ -24,7 +24,7 @@ import Ordering.Double.TotalOrdering
  */
 
 class PointToClusterCellProcessor extends Processor[String, Point] {
-  val r = 10
+  val r = 1
 
   val a = 0.998
 
@@ -53,8 +53,44 @@ class PointToClusterCellProcessor extends Processor[String, Point] {
       duration,
       PunctuationType.WALL_CLOCK_TIME,
       (_ => {
+
+        clusterCells.all.asScala.foreach(
+          cell =>
+            clusterCells.put(
+              cell.key,
+              ClusterCell(
+                cell.value.seedPoint,
+                cell.value.timelyDensity * decay,
+                cell.value.dependentDistance
+              )
+          )
+        )
         val points = pointBuffer.all.asScala
         points.foreach(point => processPoint(point.key, point.value))
+        clusterCells.all.asScala.foreach(cell => {
+          if (cell.value.timelyDensity < 0.8) {
+            clusterCells.delete(cell.key)
+            context.forward(cell.key, null)
+          } else {
+            val updatedCell = ClusterCell(
+              cell.value.seedPoint,
+              cell.value.timelyDensity,
+              clusterCells.all.asScala
+                .filter(
+                  otherCell =>
+                    otherCell.key != cell.key && otherCell.value.timelyDensity > cell.value.timelyDensity
+                )
+                .map(
+                  otherCell =>
+                    pointClusterCellDist(cell.value.seedPoint, otherCell.value)
+                )
+                .minByOption(dist => dist)
+            )
+            clusterCells.put(cell.key, updatedCell)
+            context.forward(cell.key, updatedCell)
+          }
+
+        })
         context.commit()
       }): Punctuator
     )
@@ -77,12 +113,11 @@ class PointToClusterCellProcessor extends Processor[String, Point] {
       )
 
       val newuuid = UUID.randomUUID.toString
-      this.context.forward(newuuid, newClusterCell)
       this.clusterCells.put(newuuid, newClusterCell)
     } else {
       // merge found cluster cell with point
       val oldClusterCell = closestCell.get._1
-      val timelyDensity = decay * oldClusterCell.value.timelyDensity + 1
+      val timelyDensity = oldClusterCell.value.timelyDensity + 1
       val seedPoint = oldClusterCell.value.seedPoint
       val mergedClusterCell = ClusterCell(
         seedPoint,
@@ -94,7 +129,6 @@ class PointToClusterCellProcessor extends Processor[String, Point] {
           .map(cell => pointClusterCellDist(seedPoint, cell.value))
           .minByOption(dist => dist)
       )
-      this.context.forward(oldClusterCell.key, mergedClusterCell)
       this.clusterCells.put(oldClusterCell.key, mergedClusterCell)
     }
   }
