@@ -106,10 +106,7 @@ class PointToClusterCellProcessor extends Processor[String, Point] {
       val newClusterCell = ClusterCell(
         value,
         1,
-        clusterCells.all.asScala
-          .filter(_.value.timelyDensity > 1)
-          .map(cell => pointClusterCellDist(value, cell.value))
-          .minByOption(dist => dist)
+        None
       )
 
       val newuuid = UUID.randomUUID.toString
@@ -119,16 +116,13 @@ class PointToClusterCellProcessor extends Processor[String, Point] {
       val oldClusterCell = closestCell.get._1
       val timelyDensity = oldClusterCell.value.timelyDensity + 1
       val seedPoint = oldClusterCell.value.seedPoint
+
       val mergedClusterCell = ClusterCell(
         seedPoint,
         timelyDensity,
-        clusterCells.all.asScala
-          .filter(
-            cell => cell.key != oldClusterCell.key && cell.value.timelyDensity > timelyDensity
-          )
-          .map(cell => pointClusterCellDist(seedPoint, cell.value))
-          .minByOption(dist => dist)
+        None
       )
+
       this.clusterCells.put(oldClusterCell.key, mergedClusterCell)
     }
   }

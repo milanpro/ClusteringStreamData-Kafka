@@ -6,19 +6,18 @@ import java.util.regex.Pattern
 import javax.swing.{JFrame, JPanel}
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.serialization.StringDeserializer
-import org.knowm.xchart.XYSeries.XYSeriesRenderStyle
-import org.knowm.xchart.{XChartPanel, XYChart, XYChartBuilder}
+import org.knowm.xchart.{BubbleChart, BubbleChartBuilder, XChartPanel}
 import types.cell.{ClusterCell, ClusterCellDeserializer}
 import types.point.{Point, PointDeserializer}
 
-import scala.jdk.CollectionConverters._
 import scala.collection.mutable
+import scala.jdk.CollectionConverters._
 import scala.util.control.Breaks._
 
 object StreamPlotter extends App {
 
   def makeChart = {
-    val chart = new XYChartBuilder()
+    val chart = new BubbleChartBuilder()
       .width(600)
       .height(500)
       .title("Stream Plot")
@@ -26,10 +25,18 @@ object StreamPlotter extends App {
       .yAxisTitle("Y")
       .build
 
-    chart.getStyler.setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Scatter)
-
-    chart.addSeries("Points", new Array[Double](1))
-    chart.addSeries("Clusters", new Array[Double](1))
+    chart.addSeries(
+      "Clusters",
+      new Array[Double](1),
+      new Array[Double](1),
+      new Array[Double](1)
+    )
+    chart.addSeries(
+      "Points",
+      new Array[Double](1),
+      new Array[Double](1),
+      new Array[Double](1)
+    )
 
     chart
   }
@@ -59,7 +66,7 @@ object StreamPlotter extends App {
     frame.setLayout(new BorderLayout)
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
 
-    chartPanel = new XChartPanel[XYChart](chart)
+    chartPanel = new XChartPanel[BubbleChart](chart)
     frame.add(chartPanel, BorderLayout.CENTER)
 
     frame.pack()
@@ -97,14 +104,22 @@ object StreamPlotter extends App {
 
     val xvalsPoints = ringbuffer.map(_.x).toArray
     val yvalsPoints = ringbuffer.map(_.y).toArray
+    val zvalsPoints = ringbuffer.map(_ => 1D).toArray
 
     //clustersFinal.values.foreach(cell => println(cell.timelyDensity))
     val xvalsClusters = clustersFinal.values.map(_.seedPoint.x).toArray
     val yvalsClusters = clustersFinal.values.map(_.seedPoint.y).toArray
+    val zvalsClusters =
+      clustersFinal.values.map(_.dependentDistance.getOrElse(1D)).toArray
 
     javax.swing.SwingUtilities.invokeLater(() => {
-      chart.updateXYSeries("Points", xvalsPoints, yvalsPoints, null)
-      chart.updateXYSeries("Clusters", xvalsClusters, yvalsClusters, null)
+      chart.updateBubbleSeries(
+        "Clusters",
+        xvalsClusters,
+        yvalsClusters,
+        zvalsClusters
+      )
+      chart.updateBubbleSeries("Points", xvalsPoints, yvalsPoints, zvalsPoints)
       chartPanel.repaint()
     })
   }
