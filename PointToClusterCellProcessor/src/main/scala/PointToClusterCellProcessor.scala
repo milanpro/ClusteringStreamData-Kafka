@@ -61,7 +61,8 @@ class PointToClusterCellProcessor extends Processor[String, Point] {
               ClusterCell(
                 cell.value.seedPoint,
                 cell.value.timelyDensity * decay,
-                cell.value.dependentDistance
+                cell.value.dependentDistance,
+                cell.value.dependentClusterCell
               )
           )
         )
@@ -72,24 +73,28 @@ class PointToClusterCellProcessor extends Processor[String, Point] {
             clusterCells.delete(cell.key)
             context.forward(cell.key, null)
           } else {
+            val dependentCell = clusterCells.all.asScala
+              .filter(
+                otherCell =>
+                  otherCell.key != cell.key && otherCell.value.timelyDensity > cell.value.timelyDensity
+              )
+              .map(
+                otherCell =>
+                  (
+                    otherCell.key,
+                    pointClusterCellDist(cell.value.seedPoint, otherCell.value)
+                )
+              )
+              .minByOption(tuple => tuple._2)
             val updatedCell = ClusterCell(
               cell.value.seedPoint,
               cell.value.timelyDensity,
-              clusterCells.all.asScala
-                .filter(
-                  otherCell =>
-                    otherCell.key != cell.key && otherCell.value.timelyDensity > cell.value.timelyDensity
-                )
-                .map(
-                  otherCell =>
-                    pointClusterCellDist(cell.value.seedPoint, otherCell.value)
-                )
-                .minByOption(dist => dist)
+              dependentCell.map(_._2),
+              dependentCell.map(_._1)
             )
             clusterCells.put(cell.key, updatedCell)
             context.forward(cell.key, updatedCell)
           }
-
         })
         context.commit()
       }): Punctuator
@@ -106,6 +111,7 @@ class PointToClusterCellProcessor extends Processor[String, Point] {
       val newClusterCell = ClusterCell(
         value,
         1,
+        None,
         None
       )
 
@@ -120,6 +126,7 @@ class PointToClusterCellProcessor extends Processor[String, Point] {
       val mergedClusterCell = ClusterCell(
         seedPoint,
         timelyDensity,
+        None,
         None
       )
 

@@ -110,7 +110,7 @@ object StreamPlotter extends App {
     val xvalsClusters = clustersFinal.values.map(_.seedPoint.x).toArray
     val yvalsClusters = clustersFinal.values.map(_.seedPoint.y).toArray
     val zvalsClusters =
-      clustersFinal.values.map(_.dependentDistance.getOrElse(1D)).toArray
+      clustersFinal.values.map(_.timelyDensity * 10).toArray
 
     javax.swing.SwingUtilities.invokeLater(() => {
       chart.updateBubbleSeries(
