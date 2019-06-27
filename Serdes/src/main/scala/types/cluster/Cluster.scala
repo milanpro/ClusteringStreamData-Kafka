@@ -17,7 +17,15 @@ class Cluster extends Serializable {
     cells.remove(key).nonEmpty
   }
 
-  def size(): Int = {
+  def size: Int = {
     cells.size
+  }
+
+  def getCells: collection.mutable.Map[String, ClusterCell] = {
+    cells
+  }
+
+  def getCell(key: String): Option[ClusterCell] = {
+    cells.get(key)
   }
 }

@@ -1,5 +1,6 @@
 rootProject.name = 'MSD_Clustering_Stream_Data'
 include 'StreamVisualizer'
+include 'StreamWebServer'
 include 'WordCount'
 include 'DataGenerator'
 include 'PointToClusterCellProcessor'

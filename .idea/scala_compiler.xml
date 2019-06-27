@@ -9,7 +9,7 @@
         <parameter value="-target:jvm-1.8" />
       </parameters>
     </profile>
-    <profile name="Gradle 2" modules="DataGenerator_main,DataGenerator_test,MSD_Clustering_Stream_Data.DataGenerator.main,MSD_Clustering_Stream_Data.DataGenerator.test,MSD_Clustering_Stream_Data.PointToClusterCellProcessor.main,MSD_Clustering_Stream_Data.PointToClusterCellProcessor.test,MSD_Clustering_Stream_Data.Serdes.main,MSD_Clustering_Stream_Data.Serdes.test,MSD_Clustering_Stream_Data.StreamVisualizer.main,MSD_Clustering_Stream_Data.StreamVisualizer.test,MSD_Clustering_Stream_Data.WordCount.main,MSD_Clustering_Stream_Data.WordCount.test,PointToClusterCellProcessor_main,PointToClusterCellProcessor_test,Serdes_main,Serdes_test,StreamVisualizer_main,StreamVisualizer_test,WordCount_main,WordCount_test">
+    <profile name="Gradle 2" modules="DataGenerator_main,DataGenerator_test,MSD_Clustering_Stream_Data.DataGenerator.main,MSD_Clustering_Stream_Data.DataGenerator.test,MSD_Clustering_Stream_Data.PointToClusterCellProcessor.main,MSD_Clustering_Stream_Data.PointToClusterCellProcessor.test,MSD_Clustering_Stream_Data.Serdes.main,MSD_Clustering_Stream_Data.Serdes.test,MSD_Clustering_Stream_Data.StreamVisualizer.main,MSD_Clustering_Stream_Data.StreamVisualizer.test,MSD_Clustering_Stream_Data.StreamWebServer.main,MSD_Clustering_Stream_Data.StreamWebServer.test,MSD_Clustering_Stream_Data.WordCount.main,MSD_Clustering_Stream_Data.WordCount.test,PointToClusterCellProcessor_main,PointToClusterCellProcessor_test,Serdes_main,Serdes_test,StreamVisualizer_main,StreamVisualizer_test,WordCount_main,WordCount_test">
       <option name="deprecationWarnings" value="true" />
       <option name="uncheckedWarnings" value="true" />
       <parameters>

@@ -1,4 +1,4 @@
-import java.util.Properties
+import java.util.{Properties, UUID}
 
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.serialization.StringSerializer
@@ -16,8 +16,6 @@ object DataGenerator extends App {
 
   val kafkaProducer =
     new KafkaProducer[String, Point](properties, stringSer, pointSer)
-
-  val id = 0
 
   var distributions: List[((Double, Double), (Double, Double))] = List()
 
@@ -37,7 +35,11 @@ object DataGenerator extends App {
       Random.nextGaussian() * distrib._2._1 + distrib._2._2
     )
     val record =
-      new ProducerRecord[String, Point]("streams-points-input", s"$id", point)
+      new ProducerRecord[String, Point](
+        "streams-points-input",
+        UUID.randomUUID.toString,
+        point
+      )
     Thread.sleep(10)
     kafkaProducer.send(record)
   }
