@@ -41,7 +41,7 @@ class PointToClusterCellProcessor extends Processor[String, Point] {
   override def init(context: ProcessorContext): Unit = {
     this.context = context
     clusterCells = context
-      .getStateStore("cluster-buffer-store")
+      .getStateStore("clustercell-buffer-store")
       .asInstanceOf[KeyValueStore[String, ClusterCell]]
     pointBuffer = context
       .getStateStore("point-buffer-store")

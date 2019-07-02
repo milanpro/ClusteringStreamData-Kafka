@@ -26,7 +26,7 @@ object StreamPlotter extends App {
       .build
 
     chart.addSeries(
-      "Clusters",
+      "Cluster Cells",
       new Array[Double](1),
       new Array[Double](1),
       new Array[Double](1)
@@ -73,7 +73,7 @@ object StreamPlotter extends App {
     frame.setVisible(true)
   })
 
-  clusterConsumer.subscribe(Pattern.compile("streams-clusters-input"))
+  clusterConsumer.subscribe(Pattern.compile("streams-clustercells-input"))
   pointConsumer.subscribe(Pattern.compile("streams-points-input"))
 
   val ringbuffer = mutable.Queue[Point]()
@@ -114,7 +114,7 @@ object StreamPlotter extends App {
 
     javax.swing.SwingUtilities.invokeLater(() => {
       chart.updateBubbleSeries(
-        "Clusters",
+        "Cluster Cells",
         xvalsClusters,
         yvalsClusters,
         zvalsClusters

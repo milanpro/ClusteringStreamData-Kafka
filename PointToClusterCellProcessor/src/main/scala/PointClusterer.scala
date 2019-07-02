@@ -24,7 +24,7 @@ object PointClusterer extends App {
   )
 
   val clusterBufferStateStore = Stores.keyValueStoreBuilder(
-    Stores.inMemoryKeyValueStore("cluster-buffer-store"),
+    Stores.inMemoryKeyValueStore("clustercell-buffer-store"),
     new StringSerde,
     new ClusterCellSerde
   )
@@ -51,7 +51,7 @@ object PointClusterer extends App {
     )
     .addSink(
       "clusters-sink",
-      "streams-clusters-input",
+      "streams-clustercells-input",
       new StringSerializer,
       new ClusterCellSerializer,
       "point-to-cluster-cell-processor"

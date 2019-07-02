@@ -25,7 +25,7 @@ class StreamWebServerService {
   }
 
   @KafkaListener(
-    topics = Array("streams-clusters-input"),
+    topics = Array("streams-clustercells-input"),
     containerFactory = "kafkaListenerClusterCellContainerFactory"
   )
   def consumeClusterCell(
