@@ -3,7 +3,7 @@ import { ChartPoint } from "chart.js";
 export interface KafkaPoint extends ChartPoint {
   x: number;
   y: number;
-};
+}
 
 export type KafkaEvent<T> = {
   headers: {
