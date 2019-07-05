@@ -76,7 +76,7 @@ object StreamPlotter extends App {
   clusterConsumer.subscribe(Pattern.compile("streams-clustercells-input"))
   pointConsumer.subscribe(Pattern.compile("streams-points-input"))
 
-  val ringbuffer = mutable.Queue[Point]()
+  val ringBuffer = mutable.Queue[Point]()
   val clustersFinal = mutable.Map[String, ClusterCell]()
 
   while (true) breakable {
@@ -88,8 +88,8 @@ object StreamPlotter extends App {
     val points: Iterable[Point] = pointResult.asScala.map(_.value())
 
     points.foreach(point => {
-      if (ringbuffer.length >= 500) ringbuffer.dequeue()
-      ringbuffer += point
+      if (ringBuffer.length >= 500) ringBuffer.dequeue()
+      ringBuffer += point
     })
 
     clusterResult.asScala.foreach(
@@ -102,24 +102,24 @@ object StreamPlotter extends App {
       }
     )
 
-    val xvalsPoints = ringbuffer.map(_.x).toArray
-    val yvalsPoints = ringbuffer.map(_.y).toArray
-    val zvalsPoints = ringbuffer.map(_ => 1D).toArray
+    val xValsPoints = ringBuffer.map(_.x).toArray
+    val yValsPoints = ringBuffer.map(_.y).toArray
+    val zValsPoints = ringBuffer.map(_ => 1D).toArray
 
     //clustersFinal.values.foreach(cell => println(cell.timelyDensity))
-    val xvalsClusters = clustersFinal.values.map(_.seedPoint.x).toArray
-    val yvalsClusters = clustersFinal.values.map(_.seedPoint.y).toArray
-    val zvalsClusters =
+    val xValsClusters = clustersFinal.values.map(_.seedPoint.x).toArray
+    val yValsClusters = clustersFinal.values.map(_.seedPoint.y).toArray
+    val zValsClusters =
       clustersFinal.values.map(_.timelyDensity * 10).toArray
 
     javax.swing.SwingUtilities.invokeLater(() => {
       chart.updateBubbleSeries(
         "Cluster Cells",
-        xvalsClusters,
-        yvalsClusters,
-        zvalsClusters
+        xValsClusters,
+        yValsClusters,
+        zValsClusters
       )
-      chart.updateBubbleSeries("Points", xvalsPoints, yvalsPoints, zvalsPoints)
+      chart.updateBubbleSeries("Points", xValsPoints, yValsPoints, zValsPoints)
       chartPanel.repaint()
     })
   }

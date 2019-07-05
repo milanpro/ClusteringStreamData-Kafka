@@ -1,0 +1,29 @@
+{
+  "cSpell.words": [
+    "autowired",
+    "broker",
+    "cell",
+    "chrono",
+    "cluster",
+    "clustercell",
+    "clustercells",
+    "clusterer",
+    "configurer",
+    "datasets",
+    "distri",
+    "distrib",
+    "groupid",
+    "gson",
+    "message",
+    "punctuator",
+    "serde",
+    "serializer",
+    "socket",
+    "steppingtime",
+    "unit",
+    "uuid",
+    "vals",
+    "web"
+  ],
+  "java.configuration.updateBuildConfiguration": "automatic"
+}

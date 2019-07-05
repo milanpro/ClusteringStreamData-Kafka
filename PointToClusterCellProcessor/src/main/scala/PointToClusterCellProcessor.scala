@@ -53,7 +53,7 @@ class PointToClusterCellProcessor extends Processor[String, Point] {
       duration,
       PunctuationType.WALL_CLOCK_TIME,
       (_ => {
-
+        
         clusterCells.all.asScala.foreach(
           cell =>
             clusterCells.put(
@@ -115,8 +115,8 @@ class PointToClusterCellProcessor extends Processor[String, Point] {
         None
       )
 
-      val newuuid = UUID.randomUUID.toString
-      this.clusterCells.put(newuuid, newClusterCell)
+      val newUuid = UUID.randomUUID.toString
+      this.clusterCells.put(newUuid, newClusterCell)
     } else {
       // merge found cluster cell with point
       val oldClusterCell = closestCell.get._1

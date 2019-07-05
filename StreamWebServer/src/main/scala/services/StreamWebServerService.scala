@@ -1,4 +1,4 @@
-package MSD_Clustering_Stream_date.StreamWebServer.services
+package de.hpi.msd.server.services
 
 import com.google.gson.Gson
 import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord}

@@ -1,6 +1,7 @@
 plugins {
     id 'scala'
     id 'idea'
+    id 'application'
 }
 
 group 'de.hpi.msd'
@@ -8,6 +9,10 @@ version '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
+}
+
+application {
+    mainClassName = 'DataGenerator'
 }
 
 dependencies {

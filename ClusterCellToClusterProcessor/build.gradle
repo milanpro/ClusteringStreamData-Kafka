@@ -7,19 +7,17 @@ plugins {
 group 'de.hpi.msd'
 version '1.0-SNAPSHOT'
 
-application {
-    mainClassName = 'StreamPlotter'
-}
-
 repositories {
     mavenCentral()
 }
 
-dependencies {
-    implementation 'org.apache.kafka:kafka-clients:2.2.0'
-    implementation 'org.apache.kafka:kafka_2.12:2.2.0'
+application {
+    mainClassName = 'DataGenerator'
+}
 
-    implementation 'org.knowm.xchart:xchart:3.5.4'
+dependencies {
+    implementation 'org.apache.kafka:kafka-streams:2.2.0'
+    implementation 'org.apache.kafka:kafka-clients:2.2.0'
 
     implementation 'org.slf4j:slf4j-simple:1.7.26'
 

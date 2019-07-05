@@ -2,9 +2,8 @@ plugins {
     id 'scala'
     id 'org.springframework.boot' version '2.1.6.RELEASE'
     id 'idea'
+    id 'io.spring.dependency-management' version "1.0.8.RELEASE"
 }
-
-apply plugin: 'io.spring.dependency-management'
 
 group 'de.hpi.msd'
 version '1.0-SNAPSHOT'

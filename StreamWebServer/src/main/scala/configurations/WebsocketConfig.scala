@@ -1,4 +1,4 @@
-package MSD_Clustering_Stream_date.StreamWebServer.configurations
+package de.hpi.msd.server.configurations
 
 import org.springframework.context.annotation.Configuration
 import org.springframework.messaging.simp.config.MessageBrokerRegistry
