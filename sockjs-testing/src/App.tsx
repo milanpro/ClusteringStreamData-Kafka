@@ -3,11 +3,12 @@ import Chart from "chart.js";
 import "./App.css";
 import SockJS from "sockjs-client";
 import * as Stomp from "@stomp/stompjs";
-import { KafkaPointEvent } from "./KafkaClusteringTypes";
+import { KafkaPointEvent, KafkaClusterCell, KafkaClusterCellEvent } from "./KafkaClusteringTypes";
 
 let scatterChart: Chart | undefined = undefined;
 
 let pointBuffer: any[] = [];
+let clusterCellBuffer: KafkaClusterCellEvent[] = [];
 const dataMaxSize = 500;
 const dataBatchSize = dataMaxSize / 20;
 
@@ -46,14 +47,23 @@ const App: React.FC = () => {
         const clusterCellSub = client.subscribe(
           "/topic/clustercells",
           value => {
-            console.log(JSON.parse(value.body));
-            clusterCellSub.unsubscribe();
+            if (scatterChart) {
+              const clusterCellEvent: KafkaClusterCellEvent = JSON.parse(value.body);
+              clusterCellBuffer = clusterCellBuffer.filter(value => value.key !== clusterCellEvent.key);
+              if (clusterCellEvent.value.timelyDensity > 0.8){
+                clusterCellBuffer.push(clusterCellEvent)
+                
+              }
+              scatterChart.data!.datasets![1].data! = clusterCellBuffer.map(e => e.value.seedPoint);
+              scatterChart.update({duration: 0});
+                console.log("cell");
           }
+
+        }
         );
-        // const clusterSub = client.subscribe("/topic/clusters", (value) => {
-        //     console.log(JSON.parse(value.body));
-        //     clusterSub.unsubscribe()
-        // })
+        const clusterSub = client.subscribe("/topic/clusters", (value) => {
+            console.log(JSON.parse(value.body));
+        })
       }
     });
     client.activate();
@@ -70,6 +80,11 @@ const App: React.FC = () => {
             datasets: [
               {
                 label: "points",
+                data: []
+              },
+              {
+                label: "cluster-cells",
+                pointBackgroundColor: "blue",
                 data: []
               }
             ]

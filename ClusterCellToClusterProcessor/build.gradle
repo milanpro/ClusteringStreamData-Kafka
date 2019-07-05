@@ -12,7 +12,7 @@ repositories {
 }
 
 application {
-    mainClassName = 'DataGenerator'
+    mainClassName = 'ClusterCellClusterer'
 }
 
 dependencies {

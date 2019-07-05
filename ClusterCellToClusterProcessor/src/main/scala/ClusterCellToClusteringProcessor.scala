@@ -23,7 +23,7 @@ class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
   override def init(context: ProcessorContext): Unit = {
     this.context = context
     clusters = context
-      .getStateStore("cluster-store")
+      .getStateStore("cluster-buffer-store")
       .asInstanceOf[KeyValueStore[String, Cluster]]
 
   }
@@ -81,15 +81,17 @@ class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
       /**
         * Find cell the updated cell depends on and add the updated cell to the same cluster
         */
+      if (oldCluster.isDefined && value.dependentClusterCell.isDefined){
       val newCluster = oldClusters
         .find(
           cluster => cluster.value.containsCell(value.dependentClusterCell.get)
         )
-        .get
-      newCluster.value
-        .addCell(key, value)
-      context.forward(newCluster.key, newCluster.value)
-      context.commit()
+      if (newCluster.isDefined){
+        newCluster.get.value.addCell(key, value)
+        context.forward(newCluster.get.key, newCluster.get.value)
+        context.commit()
+      }
+      }
     }
   }
 

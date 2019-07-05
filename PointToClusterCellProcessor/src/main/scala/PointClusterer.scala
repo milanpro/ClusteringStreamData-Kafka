@@ -34,6 +34,7 @@ object PointClusterer extends App {
     p.put(StreamsConfig.APPLICATION_ID_CONFIG, "point-clusterer-application")
     val bootstrapServers = if (args.length > 0) args(0) else "localhost:9092"
     p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers)
+    p.put(org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG, "point.clusterer")
     p
   }
 

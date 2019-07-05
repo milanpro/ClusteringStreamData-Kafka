@@ -36,5 +36,19 @@ class StreamWebServerService {
       new Gson().toJson(clusterCell)
     )
   }
+  
+  @KafkaListener(
+    topics = Array("streams-cluster-input"),
+    containerFactory = "kafkaListenerClusterContainerFactory"
+  )
+  def consumeCluster(
+    @Payload cluster: ConsumerRecord[String, Cluster]
+  ): Unit = {
+    print("send cluster")
+    template.convertAndSend(
+      "/topic/clusters",
+      new Gson().toJson(cluster)
+    )
+  }
 
 }

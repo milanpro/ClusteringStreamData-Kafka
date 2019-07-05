@@ -5,6 +5,13 @@ export interface KafkaPoint extends ChartPoint {
   y: number;
 }
 
+export interface KafkaClusterCell {
+  dependentClusterCell: any,
+  dependentDistance: any,
+  seedPoint: KafkaPoint,
+  timelyDensity: number
+}
+
 export type KafkaEvent<T> = {
   headers: {
     headers: any[];
@@ -22,3 +29,4 @@ export type KafkaEvent<T> = {
 };
 
 export type KafkaPointEvent = KafkaEvent<KafkaPoint>;
+export type KafkaClusterCellEvent = KafkaEvent<KafkaClusterCell>;

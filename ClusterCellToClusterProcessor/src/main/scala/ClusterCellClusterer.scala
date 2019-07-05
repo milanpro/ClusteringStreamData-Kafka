@@ -11,27 +11,25 @@ import org.apache.kafka.streams.state.Stores
 import org.apache.kafka.streams.{KafkaStreams, StreamsConfig, Topology}
 import types.cell.{ClusterCellSerde, ClusterCellSerializer}
 import types.point.{Point, PointDeserializer, PointSerde}
+import types.cell.ClusterCell
+import types.cluster.ClusterSerde
+import types.cell.ClusterCellDeserializer
+import types.cluster.ClusterSerializer
 
 object ClusterCellClusterer extends App {
 
-  val clusterCellProcessorSupplier: ProcessorSupplier[String, Point] =
-    () => new PointToClusterCellProcessor
-
-  val pointBufferStateStore = Stores.keyValueStoreBuilder(
-    Stores.inMemoryKeyValueStore("point-buffer-store"),
-    new StringSerde,
-    new PointSerde
-  )
+  val clusterProcessorSupplier: ProcessorSupplier[String, ClusterCell] =
+    () => new ClusterCellToClusteringProcessor
 
   val clusterBufferStateStore = Stores.keyValueStoreBuilder(
-    Stores.inMemoryKeyValueStore("clustercell-buffer-store"),
+    Stores.inMemoryKeyValueStore("cluster-buffer-store"),
     new StringSerde,
-    new ClusterCellSerde
+    new ClusterSerde
   )
 
   val config: Properties = {
     val p = new Properties
-    p.put(StreamsConfig.APPLICATION_ID_CONFIG, "point-clusterer-application")
+    p.put(StreamsConfig.APPLICATION_ID_CONFIG, "cluster-cell-clusterer-application")
     val bootstrapServers = if (args.length > 0) args(0) else "localhost:9092"
     p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers)
     p
@@ -39,25 +37,24 @@ object ClusterCellClusterer extends App {
 
   val topology = new Topology()
     .addSource(
-      "points",
+      "clustercells",
       new StringDeserializer,
-      new PointDeserializer,
-      "streams-points-input"
+      new ClusterCellDeserializer,
+      "streams-clustercells-input"
     )
     .addProcessor(
-      "point-to-cluster-cell-processor",
-      clusterCellProcessorSupplier,
-      "points"
+      "cluster-cell-to-cluster-processor",
+      clusterProcessorSupplier,
+      "clustercells"
     )
     .addSink(
       "clusters-sink",
-      "streams-clustercells-input",
+      "streams-cluster-input",
       new StringSerializer,
-      new ClusterCellSerializer,
-      "point-to-cluster-cell-processor"
+      new ClusterSerializer,
+      "cluster-cell-to-cluster-processor"
     )
-    .addStateStore(pointBufferStateStore, "point-to-cluster-cell-processor")
-    .addStateStore(clusterBufferStateStore, "point-to-cluster-cell-processor")
+  .addStateStore(clusterBufferStateStore, "cluster-cell-to-cluster-processor")
 
   val streams: KafkaStreams = new KafkaStreams(topology, config)
 
