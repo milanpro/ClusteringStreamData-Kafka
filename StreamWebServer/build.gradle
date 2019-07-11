@@ -3,6 +3,7 @@ plugins {
     id 'org.springframework.boot' version '2.1.6.RELEASE'
     id 'idea'
     id 'io.spring.dependency-management' version "1.0.8.RELEASE"
+    id 'com.bmuschko.docker-spring-boot-application' version '4.10.0'
 }
 
 group 'de.hpi.msd'
@@ -10,6 +11,14 @@ version '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
+}
+
+docker {
+    springBootApplication {
+        baseImage = 'openjdk:8-jre-slim'
+        ports = [9092, 5656]
+        tag = 'webserver:0.1'
+    }
 }
 
 dependencies {
