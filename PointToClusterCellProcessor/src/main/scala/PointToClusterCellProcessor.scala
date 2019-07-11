@@ -12,8 +12,8 @@ import org.apache.kafka.streams.state.KeyValueStore
 import types.cell.ClusterCell
 import types.point.Point
 
+import scala.Ordering.Double.TotalOrdering
 import scala.jdk.CollectionConverters._
-import Ordering.Double.TotalOrdering
 
 /*
  * https://docs.confluent.io/current/streams/developer-guide/processor-api.html#defining-a-stream-processor
@@ -52,56 +52,58 @@ class PointToClusterCellProcessor extends Processor[String, Point] {
     context.schedule(
       duration,
       PunctuationType.WALL_CLOCK_TIME,
-      (_ => {
-        
-        clusterCells.all.asScala.foreach(
-          cell =>
-            clusterCells.put(
-              cell.key,
-              ClusterCell(
-                cell.value.seedPoint,
-                cell.value.timelyDensity * decay,
-                cell.value.dependentDistance,
-                cell.value.dependentClusterCell
-              )
-          )
-        )
-        val points = pointBuffer.all.asScala
-        points.foreach(point => processPoint(point.key, point.value))
-        clusterCells.all.asScala.foreach(cell => {
-          if (cell.value.timelyDensity < 0.8) {
-            clusterCells.delete(cell.key)
-            context.forward(cell.key, null)
-          } else {
-            val dependentCell = clusterCells.all.asScala
-              .filter(
-                otherCell =>
-                  otherCell.key != cell.key && otherCell.value.timelyDensity > cell.value.timelyDensity
-              )
-              .map(
-                otherCell =>
-                  (
-                    otherCell.key,
-                    pointClusterCellDist(cell.value.seedPoint, otherCell.value)
-                )
-              )
-              .minByOption(tuple => tuple._2)
-            val updatedCell = ClusterCell(
-              cell.value.seedPoint,
-              cell.value.timelyDensity,
-              dependentCell.map(_._2),
-              dependentCell.map(_._1)
-            )
-            clusterCells.put(cell.key, updatedCell)
-            context.forward(cell.key, updatedCell)
-          }
-        })
-        context.commit()
-      }): Punctuator
+      processPoints
     )
   }
 
-  def processPoint(key: String, value: Point): Unit = {
+  private def processPoints =
+    (_ => {
+      clusterCells.all.asScala.foreach(
+        cell =>
+          clusterCells.put(
+            cell.key,
+            ClusterCell(
+              cell.value.seedPoint,
+              cell.value.timelyDensity * decay,
+              cell.value.dependentDistance,
+              cell.value.dependentClusterCell
+            )
+        )
+      )
+      val points = pointBuffer.all.asScala
+      points.foreach(point => processPoint(point.key, point.value))
+      clusterCells.all.asScala.foreach(cell => {
+        if (cell.value.timelyDensity < 0.8) {
+          clusterCells.delete(cell.key)
+          context.forward(cell.key, null)
+        } else {
+          val dependentCell = clusterCells.all.asScala
+            .filter(
+              otherCell =>
+                otherCell.key != cell.key && otherCell.value.timelyDensity > cell.value.timelyDensity
+            )
+            .map(
+              otherCell =>
+                (
+                  otherCell.key,
+                  pointClusterCellDist(cell.value.seedPoint, otherCell.value)
+              )
+            )
+            .minByOption(tuple => tuple._2)
+          val updatedCell = ClusterCell(
+            cell.value.seedPoint,
+            cell.value.timelyDensity,
+            dependentCell.map(_._2),
+            dependentCell.map(_._1)
+          )
+          clusterCells.put(cell.key, updatedCell)
+          context.forward(cell.key, updatedCell)
+        }
+      })
+      context.commit()
+    }): Punctuator
+
+  private def processPoint(key: String, value: Point): Unit = {
     val closestCell = clusterCells.all.asScala
       .map(cell => (cell, pointClusterCellDist(value, cell.value)))
       .minByOption(_._2)
@@ -130,6 +132,7 @@ class PointToClusterCellProcessor extends Processor[String, Point] {
         None
       )
 
+      this.pointBuffer.delete(key)
       this.clusterCells.put(oldClusterCell.key, mergedClusterCell)
     }
   }

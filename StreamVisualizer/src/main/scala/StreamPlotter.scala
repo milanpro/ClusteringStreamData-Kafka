@@ -81,7 +81,7 @@ object StreamPlotter extends App {
 
   while (true) breakable {
     val pointResult = pointConsumer.poll(Duration.ofSeconds(1))
-    val clusterResult = clusterConsumer.poll(Duration.ofMillis(1))
+    val clusterResult = clusterConsumer.poll(Duration.ofSeconds(1))
 
     if (pointResult.count() == 0 && clusterResult.count() == 0) break
 
@@ -110,7 +110,7 @@ object StreamPlotter extends App {
     val xValsClusters = clustersFinal.values.map(_.seedPoint.x).toArray
     val yValsClusters = clustersFinal.values.map(_.seedPoint.y).toArray
     val zValsClusters =
-      clustersFinal.values.map(_.timelyDensity * 10).toArray
+      clustersFinal.values.map(_.timelyDensity).toArray
 
     javax.swing.SwingUtilities.invokeLater(() => {
       chart.updateBubbleSeries(
