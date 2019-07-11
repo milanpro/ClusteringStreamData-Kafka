@@ -2,6 +2,7 @@ plugins {
     id 'scala'
     id 'idea'
     id 'application'
+    id 'com.bmuschko.docker-java-application' version '4.10.0'
 }
 
 group 'de.hpi.msd'
@@ -13,6 +14,14 @@ application {
 
 repositories {
     mavenCentral()
+}
+
+docker {
+    javaApplication {
+        baseImage = 'openjdk:8-jre-slim'
+        ports = [9092]
+        tag = 'p2ccprocessor:0.1'
+    }
 }
 
 dependencies {
