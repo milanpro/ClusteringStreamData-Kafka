@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: msd-cc2cprocessor
+  namespace: kafka
+  labels:
+    app: cc2cprocessor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cc2cprocessor
+  template:
+    metadata:
+      labels:
+        app: cc2cprocessor
+    spec:
+      containers:
+        - name: cc2cprocessor
+          image: gcr.io/msdclustering/cc2cprocessor

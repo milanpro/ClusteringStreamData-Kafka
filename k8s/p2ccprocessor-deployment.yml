@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: msd-p2ccprocessor
+  namespace: kafka
+  labels:
+    app: p2ccprocessor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: p2ccprocessor
+  template:
+    metadata:
+      labels:
+        app: p2ccprocessor
+    spec:
+      containers:
+        - name: p2ccprocessor
+          image: gcr.io/msdclustering/p2ccprocessor

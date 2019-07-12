@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: msd-datagenerator
+  namespace: kafka
+  labels:
+    app: datagenerator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: datagenerator
+  template:
+    metadata:
+      labels:
+        app: datagenerator
+    spec:
+      containers:
+        - name: datagenerator
+          image: gcr.io/msdclustering/datagenerator
