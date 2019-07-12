@@ -17,24 +17,31 @@ object PointClusterer extends App {
   val clusterCellProcessorSupplier: ProcessorSupplier[String, Point] =
     () => new PointToClusterCellProcessor
 
-  val pointBufferStateStore = Stores.keyValueStoreBuilder(
-    Stores.inMemoryKeyValueStore("point-buffer-store"),
-    new StringSerde,
-    new PointSerde
-  )
+  val pointBufferStateStore = Stores
+    .keyValueStoreBuilder(
+      Stores.inMemoryKeyValueStore("point-buffer-store"),
+      new StringSerde,
+      new PointSerde
+    )
+    .withLoggingDisabled()
 
-  val clusterBufferStateStore = Stores.keyValueStoreBuilder(
-    Stores.inMemoryKeyValueStore("clustercell-buffer-store"),
-    new StringSerde,
-    new ClusterCellSerde
-  )
+  val clusterBufferStateStore = Stores
+    .keyValueStoreBuilder(
+      Stores.inMemoryKeyValueStore("clustercell-buffer-store"),
+      new StringSerde,
+      new ClusterCellSerde
+    )
+    .withLoggingDisabled()
 
   val config: Properties = {
     val p = new Properties
     p.put(StreamsConfig.APPLICATION_ID_CONFIG, "point-clusterer-application")
     val bootstrapServers = if (args.length > 0) args(0) else "msd-kafka:9092"
     p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers)
-    p.put(org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG, "point.clusterer")
+    p.put(
+      org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG,
+      "point.clusterer"
+    )
     p
   }
 

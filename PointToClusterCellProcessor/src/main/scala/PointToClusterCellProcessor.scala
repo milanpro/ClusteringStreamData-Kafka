@@ -24,9 +24,9 @@ import scala.jdk.CollectionConverters._
  */
 
 class PointToClusterCellProcessor extends Processor[String, Point] {
-  val r = 1
+  val r = 10
 
-  val a = 0.998
+  val a = 0.898
 
   val lambda = 1
 
@@ -132,9 +132,9 @@ class PointToClusterCellProcessor extends Processor[String, Point] {
         None
       )
 
-      this.pointBuffer.delete(key)
       this.clusterCells.put(oldClusterCell.key, mergedClusterCell)
     }
+    this.pointBuffer.delete(key)
   }
 
   def pointClusterCellDist(point: Point, clusterCell: ClusterCell): Double = {
