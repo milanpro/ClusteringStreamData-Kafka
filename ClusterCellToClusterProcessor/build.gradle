@@ -16,7 +16,7 @@ docker {
     javaApplication {
         baseImage = 'openjdk:8-jre-slim'
         ports = [9092]
-        tag = 'p2cprocessor:0.1'
+        tag = 'gcr.io/msdclustering/cc2cprocessor'
     }
 }
 

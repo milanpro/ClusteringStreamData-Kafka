@@ -9,7 +9,7 @@ import scala.util.Random
 object DataGenerator extends App {
 
   val properties = new Properties()
-  properties.put("bootstrap.servers", "localhost:9092")
+  properties.put("bootstrap.servers", "msd-kafka:9092")
 
   val stringSer = new StringSerializer
   val pointSer = new PointSerializer
