@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: msd-kafkaclient
+  namespace: kafka
+spec:
+  containers:
+    - name: kafka
+      image: solsson/kafka
+      command:
+        - sh
+        - -c
+        - "exec tail -f /dev/null"
