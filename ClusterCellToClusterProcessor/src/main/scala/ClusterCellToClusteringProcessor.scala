@@ -37,7 +37,7 @@ class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
     /**
       * If the dependent distance is lower than xi, delete cell from old cluster and emit change.
       */
-    if (value.dependentDistance.isDefined && value.dependentDistance.get < xi) {
+    if (value == null || value.dependentDistance.isDefined && value.dependentDistance.get < xi) {
       if (oldCluster.isDefined) {
         oldCluster.get.value.removeCell(key)
         context.forward(oldCluster.get.key, oldCluster.get.value)
