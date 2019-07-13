@@ -15,6 +15,9 @@ class EtcdManaged(etcdHost: String) {
   ): Unit = {
     val byte_key = ByteSequence.from(key, UTF_8)
 
+    val getResult = this.client.getKVClient.get(byte_key).get()
+    getResult.getKvs.forEach(kv => callback(kv.getValue.toString(UTF_8)))
+
     this.client.getWatchClient.watch(byte_key, t => {
       t.getEvents.asScala
         .filter(_.getEventType == PUT)
