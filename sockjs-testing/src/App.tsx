@@ -50,9 +50,8 @@ const App: React.FC = () => {
             if (scatterChart) {
               const clusterCellEvent: KafkaClusterCellEvent = JSON.parse(value.body);
               clusterCellBuffer = clusterCellBuffer.filter(value => value.key !== clusterCellEvent.key);
-              if (clusterCellEvent.value.timelyDensity > 0.8){
+              if (clusterCellEvent.value && clusterCellEvent.value.timelyDensity > 0.8){
                 clusterCellBuffer.push(clusterCellEvent)
-                
               }
               scatterChart.data!.datasets![1].data! = clusterCellBuffer.map(e => e.value.seedPoint);
               scatterChart.update({duration: 0});
