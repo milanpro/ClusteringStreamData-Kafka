@@ -13,5 +13,7 @@ repositories {
 dependencies {
     implementation 'org.apache.kafka:kafka_2.12:2.2.0'
 
+    implementation 'io.etcd:jetcd-core:0.3.0'
+
     implementation 'org.apache.commons:commons-lang3:3.9'
 }

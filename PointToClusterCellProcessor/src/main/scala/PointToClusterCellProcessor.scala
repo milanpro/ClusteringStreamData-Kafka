@@ -2,6 +2,7 @@ import java.time.Duration
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
+import etcd.EtcdManaged
 import org.apache.kafka.streams.processor.{
   Processor,
   ProcessorContext,
@@ -24,15 +25,15 @@ import scala.jdk.CollectionConverters._
  */
 
 class PointToClusterCellProcessor extends Processor[String, Point] {
-  val r = 10
+  var r = 10
 
-  val a = 0.898
+  var a = 0.898
 
-  val lambda = 1
+  var lambda = 1
 
-  val steppingtime = 1
+  var steppingtime = 1
 
-  val decay = scala.math.pow(a, lambda * steppingtime)
+  def decay = scala.math.pow(a, lambda * steppingtime)
 
   private var context: ProcessorContext = _
   private var clusterCells: KeyValueStore[String, ClusterCell] = _
@@ -40,6 +41,7 @@ class PointToClusterCellProcessor extends Processor[String, Point] {
 
   override def init(context: ProcessorContext): Unit = {
     this.context = context
+
     clusterCells = context
       .getStateStore("clustercell-buffer-store")
       .asInstanceOf[KeyValueStore[String, ClusterCell]]
@@ -54,6 +56,20 @@ class PointToClusterCellProcessor extends Processor[String, Point] {
       PunctuationType.WALL_CLOCK_TIME,
       processPoints
     )
+
+    val etcdClient = new EtcdManaged("http://msd-etcd:2379")
+
+    etcdClient.watchWithCb("p2cc/radius", value => {
+      r = value.toInt
+    })
+
+    etcdClient.watchWithCb("p2cc/decay", value => {
+      a = value.toDouble
+    })
+
+    etcdClient.watchWithCb("p2cc/lambda", value => {
+      lambda = value.toInt
+    })
   }
 
   private def processPoints =

@@ -1,5 +1,6 @@
 import java.util.UUID
 
+import etcd.EtcdManaged
 import org.apache.kafka.streams.processor.{Processor, ProcessorContext}
 import org.apache.kafka.streams.state.KeyValueStore
 import types.cell.ClusterCell
@@ -13,23 +14,33 @@ import scala.jdk.CollectionConverters._
 
 class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
 
-  val xi = 0
+  var xi = 0
 
-  val tau = 10
+  var tau = 10
 
   private var context: ProcessorContext = _
   private var clusters: KeyValueStore[String, Cluster] = _
 
   override def init(context: ProcessorContext): Unit = {
     this.context = context
+
     clusters = context
       .getStateStore("cluster-buffer-store")
       .asInstanceOf[KeyValueStore[String, Cluster]]
 
+    val etcdClient = new EtcdManaged("http://msd-etcd:2379")
+
+    etcdClient.watchWithCb("cc2c/xi", value => {
+      xi = value.toInt
+    })
+
+    etcdClient.watchWithCb("cc2c/tau", value => {
+      tau = value.toInt
+    })
   }
 
   override def process(key: String, value: ClusterCell): Unit = {
-    val oldClusters = clusters.all.asScala;
+    val oldClusters = clusters.all.asScala
 
     val oldCluster =
       oldClusters.find(cluster => cluster.value.containsCell(key))
@@ -81,16 +92,17 @@ class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
       /**
         * Find cell the updated cell depends on and add the updated cell to the same cluster
         */
-      if (oldCluster.isDefined && value.dependentClusterCell.isDefined){
-      val newCluster = oldClusters
-        .find(
-          cluster => cluster.value.containsCell(value.dependentClusterCell.get)
-        )
-      if (newCluster.isDefined){
-        newCluster.get.value.addCell(key, value)
-        context.forward(newCluster.get.key, newCluster.get.value)
-        context.commit()
-      }
+      if (oldCluster.isDefined && value.dependentClusterCell.isDefined) {
+        val newCluster = oldClusters
+          .find(
+            cluster =>
+              cluster.value.containsCell(value.dependentClusterCell.get)
+          )
+        if (newCluster.isDefined) {
+          newCluster.get.value.addCell(key, value)
+          context.forward(newCluster.get.key, newCluster.get.value)
+          context.commit()
+        }
       }
     }
   }
