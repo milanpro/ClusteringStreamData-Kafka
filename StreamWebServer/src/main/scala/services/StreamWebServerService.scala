@@ -44,7 +44,6 @@ class StreamWebServerService {
   def consumeCluster(
     @Payload cluster: ConsumerRecord[String, Cluster]
   ): Unit = {
-    print("send cluster")
     template.convertAndSend(
       "/topic/clusters",
       new Gson().toJson(cluster)
