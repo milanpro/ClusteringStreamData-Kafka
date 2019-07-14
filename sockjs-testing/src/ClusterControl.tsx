@@ -15,6 +15,7 @@ const ClusterControl = () => {
     <ValueControl key="p2cc/lambda" buttonLabel="Change Lambda" defaultVal="1" />
     <ValueControl key="cc2c/xi" buttonLabel="Change XI" defaultVal="0" />
     <ValueControl key="cc2c/tau" buttonLabel="Change Tau" defaultVal="10" />
+    <ValueControl key="gen/pointDelay" buttonLabel="Change Point Delay" defaultVal="100" />
   </>
 }
 export default ClusterControl;
