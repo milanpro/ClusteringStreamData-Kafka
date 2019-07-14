@@ -30,3 +30,4 @@ export type KafkaEvent<T> = {
 
 export type KafkaPointEvent = KafkaEvent<KafkaPoint>;
 export type KafkaClusterCellEvent = KafkaEvent<KafkaClusterCell>;
+export type KafkaClusterCellDeleteEvent = KafkaEvent<undefined>;

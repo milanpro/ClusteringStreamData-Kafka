@@ -3,7 +3,8 @@ import Chart from "chart.js";
 import "./App.css";
 import SockJS from "sockjs-client";
 import * as Stomp from "@stomp/stompjs";
-import { KafkaPointEvent, KafkaClusterCell, KafkaClusterCellEvent } from "./KafkaClusteringTypes";
+import { KafkaPointEvent, KafkaClusterCellEvent, KafkaClusterCellDeleteEvent } from "./KafkaClusteringTypes";
+import ClusterControl from "./ClusterControl";
 
 let scatterChart: Chart | undefined = undefined;
 
@@ -17,6 +18,8 @@ const App: React.FC = () => {
 
   useEffect(() => {
     let pointSub: Stomp.StompSubscription;
+    let clusterCellSub: Stomp.StompSubscription;
+    let clusterSub: Stomp.StompSubscription;
     const client = new Stomp.Client({
       brokerURL: "/live",
       webSocketFactory: () => {
@@ -44,29 +47,32 @@ const App: React.FC = () => {
             }
           }
         });
-        const clusterCellSub = client.subscribe(
+        clusterCellSub = client.subscribe(
           "/topic/clustercells",
           value => {
             if (scatterChart) {
-              const clusterCellEvent: KafkaClusterCellEvent = JSON.parse(value.body);
+              const clusterCellEvent: KafkaClusterCellEvent | KafkaClusterCellDeleteEvent  = JSON.parse(value.body);
               clusterCellBuffer = clusterCellBuffer.filter(value => value.key !== clusterCellEvent.key);
               if (clusterCellEvent.value && clusterCellEvent.value.timelyDensity > 0.8){
                 clusterCellBuffer.push(clusterCellEvent)
               }
               scatterChart.data!.datasets![1].data! = clusterCellBuffer.map(e => e.value.seedPoint);
               scatterChart.update({duration: 0});
-                console.log("cell");
           }
 
         }
         );
-        const clusterSub = client.subscribe("/topic/clusters", (value) => {
+        clusterSub = client.subscribe("/topic/clusters", (value) => {
             console.log(JSON.parse(value.body));
         })
       }
     });
     client.activate();
-    return () => (pointSub ? pointSub.unsubscribe() : undefined);
+    return () => {
+      if (pointSub) pointSub.unsubscribe();
+      if (clusterCellSub) clusterCellSub.unsubscribe();
+      if (clusterSub) clusterSub.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -105,8 +111,14 @@ const App: React.FC = () => {
   }, [canvasRef]);
 
   return (
-    <div style={{ position: "relative", height: "100vh", width: "100vw" }}>
+    <div style={{ display: "flex",
+      flexDirection: "row"}}>
+    <div style={{ position: "relative", height: "100vh", width: "80vw" }}>
       <canvas ref={setRef} />
+    </div>
+    <div style={{width: "20vw"}}>
+    <ClusterControl />
+    </div>
     </div>
   );
 };

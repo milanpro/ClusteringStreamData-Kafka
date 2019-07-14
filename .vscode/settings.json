@@ -23,7 +23,7 @@
     "unit",
     "uuid",
     "vals",
-    "web"
-  ],
-  "java.configuration.updateBuildConfiguration": "automatic"
+    "web",
+    "setval"
+  ]
 }
