@@ -13,8 +13,10 @@ import org.springframework.kafka.config.KafkaListenerContainerFactory
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer
 import types.cell.{ClusterCell, ClusterCellDeserializer}
-import types.cluster.{Cluster, ClusterDeserializer}
+import types.cluster.{ClusterDeserializer}
 import types.point.{Point, PointDeserializer}
+
+import scala.collection.mutable
 
 @EnableKafka
 @Configuration class KafkaConsumerConfig {
@@ -91,13 +93,20 @@ import types.point.{Point, PointDeserializer}
   }
 
   @Bean def clusterConsumerFactory =
-    new DefaultKafkaConsumerFactory[String, Cluster](clusterConsumerConfigs)
+    new DefaultKafkaConsumerFactory[String, mutable.LinkedHashSet[
+      mutable.LinkedHashSet[ClusterCell]
+    ]](clusterConsumerConfigs)
 
   @Bean(name = Array("kafkaListenerClusterContainerFactory"))
   def kafkaListenerClusterContainerFactory: KafkaListenerContainerFactory[
-    ConcurrentMessageListenerContainer[String, Cluster]
+    ConcurrentMessageListenerContainer[String, mutable.LinkedHashSet[
+      mutable.LinkedHashSet[ClusterCell]
+    ]]
   ] = {
-    val factory = new ConcurrentKafkaListenerContainerFactory[String, Cluster]
+    val factory =
+      new ConcurrentKafkaListenerContainerFactory[String, mutable.LinkedHashSet[
+        mutable.LinkedHashSet[ClusterCell]
+      ]]
     factory.setConsumerFactory(clusterConsumerFactory)
     factory
   }

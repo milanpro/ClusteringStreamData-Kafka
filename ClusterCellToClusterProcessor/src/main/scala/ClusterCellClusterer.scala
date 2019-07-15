@@ -18,16 +18,8 @@ import types.cluster.ClusterSerializer
 
 object ClusterCellClusterer extends App {
 
-  val clusterProcessorSupplier: ProcessorSupplier[String, ClusterCell] =
+  val clusterProcessorSupplier: ProcessorSupplier[String, Option[ClusterCell]] =
     () => new ClusterCellToClusteringProcessor
-
-  val clusterBufferStateStore = Stores
-    .keyValueStoreBuilder(
-      Stores.inMemoryKeyValueStore("cluster-buffer-store"),
-      new StringSerde,
-      new ClusterSerde
-    )
-    .withLoggingDisabled()
 
   val config: Properties = {
     val p = new Properties
@@ -59,7 +51,6 @@ object ClusterCellClusterer extends App {
       new ClusterSerializer,
       "cluster-cell-to-cluster-processor"
     )
-    .addStateStore(clusterBufferStateStore, "cluster-cell-to-cluster-processor")
 
   val streams: KafkaStreams = new KafkaStreams(topology, config)
 

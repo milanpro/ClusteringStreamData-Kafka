@@ -1,32 +1,49 @@
+import java.time.Duration
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 import etcd.EtcdManaged
-import org.apache.kafka.streams.processor.{Processor, ProcessorContext}
-import org.apache.kafka.streams.state.KeyValueStore
+import org.apache.kafka.streams.processor.{
+  Processor,
+  ProcessorContext,
+  PunctuationType,
+  Punctuator
+}
+
 import types.cell.ClusterCell
-import types.cluster.Cluster
 
-import scala.jdk.CollectionConverters._
+import scala.collection.mutable
 
-/*
- * https://docs.confluent.io/current/streams/developer-guide/processor-api.html#defining-a-stream-processor
- */
+case class TreeNodeCell(
+  var clusterCell: ClusterCell,
+  var dependentCell: Option[TreeNodeCell],
+  key: String,
+  var successors: mutable.Set[TreeNodeCell] = mutable.Set.empty
+) extends Ordered[TreeNodeCell] {
+  override def compare(that: TreeNodeCell): Int = {
+    this.clusterCell.timelyDensity.compareTo(that.clusterCell.timelyDensity)
+  }
 
-class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
+  def dist(that: TreeNodeCell): Double = {
+    math.sqrt(
+      math.pow(this.clusterCell.seedPoint.x - that.clusterCell.seedPoint.x, 2) + math
+        .pow(this.clusterCell.seedPoint.y - that.clusterCell.seedPoint.y, 2)
+    )
+  }
+}
+
+class ClusterCellToClusteringProcessor
+    extends Processor[String, Option[ClusterCell]] {
 
   var xi = 0
 
   var tau = 10
 
   private var context: ProcessorContext = _
-  private var clusters: KeyValueStore[String, Cluster] = _
+  private val cellNodes: mutable.SortedSet[TreeNodeCell] = mutable.SortedSet()
 
   override def init(context: ProcessorContext): Unit = {
     this.context = context
-
-    clusters = context
-      .getStateStore("cluster-buffer-store")
-      .asInstanceOf[KeyValueStore[String, Cluster]]
 
     val etcdClient = new EtcdManaged("http://msd-etcd:2379")
 
@@ -37,73 +54,106 @@ class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
     etcdClient.watchWithCb("cc2c/tau", value => {
       tau = value.toInt
     })
+
+    val duration = Duration.of(1, ChronoUnit.SECONDS)
+
+    context.schedule(
+      duration,
+      PunctuationType.WALL_CLOCK_TIME,
+      buildClusters
+    )
   }
 
-  override def process(key: String, value: ClusterCell): Unit = {
-    val oldClusters = clusters.all.asScala
-
-    val oldCluster =
-      oldClusters.find(cluster => cluster.value.containsCell(key))
-
-    /**
-      * If the dependent distance is lower than xi, delete cell from old cluster and emit change.
-      */
-    if (value == null || value.dependentDistance.isDefined && value.dependentDistance.get < xi) {
-      if (oldCluster.isDefined) {
-        oldCluster.get.value.removeCell(key)
-        context.forward(oldCluster.get.key, oldCluster.get.value)
-        context.commit()
+  private def buildClusters =
+    (_ => {
+      val root = cellNodes.find(_.dependentCell.isEmpty)
+      val clusters =
+        mutable.LinkedHashSet.empty[mutable.LinkedHashSet[ClusterCell]]
+      val rootCluster = mutable.LinkedHashSet.empty[ClusterCell]
+      clusters += rootCluster
+      if (root.isDefined) {
+        recAddToCluster(
+          root.get,
+          rootCluster,
+          clusters
+        )
       }
-      return
-    }
-
-    /**
-      * If the dependent distance is empty or greater than tau, the cell is a root node of a MSDSubtree
-      */
-    val rootNode = value.dependentDistance.isEmpty || value.dependentDistance.get > tau
-
-    /**
-      * If the cell is alone in its cluster and a root-node, nothing changed
-      */
-    if (oldCluster.isDefined && oldCluster.get.value.size == 1 && rootNode) {
-      return
-    }
-
-    if (rootNode) {
-      if (oldCluster.isDefined) {
-        val oldDepDist = oldCluster.get.value.getCell(key).get.dependentDistance
-        // old and updated cell are root nodes -> nothing changed
-        if (oldDepDist.isEmpty || oldDepDist.get > tau) {
-          return
-        }
-
-        // cell is new root node -> remove from old cell and create new cluster cell afterwards
-        oldCluster.get.value.removeCell(key)
-        context.forward(oldCluster.get.key, oldCluster.get.value)
-      }
-      val newCluster = new Cluster()
-      val newKey = UUID.randomUUID.toString
-      newCluster.addCell(key, value)
-      clusters.put(newKey, newCluster)
-      context.forward(newKey, newCluster)
+      context.forward(UUID.randomUUID.toString, clusters)
       context.commit()
-    } else {
+    }): Punctuator
 
-      /**
-        * Find cell the updated cell depends on and add the updated cell to the same cluster
-        */
-      if (oldCluster.isDefined && value.dependentClusterCell.isDefined) {
-        val newCluster = oldClusters
-          .find(
-            cluster =>
-              cluster.value.containsCell(value.dependentClusterCell.get)
-          )
-        if (newCluster.isDefined) {
-          newCluster.get.value.addCell(key, value)
-          context.forward(newCluster.get.key, newCluster.get.value)
-          context.commit()
+  private def recAddToCluster(
+    node: TreeNodeCell,
+    cluster: mutable.Set[ClusterCell],
+    clusters: mutable.LinkedHashSet[mutable.LinkedHashSet[ClusterCell]]
+  ): Unit = {
+    cluster += node.clusterCell
+    if (node.successors.nonEmpty) {
+      node.successors.foreach(succ => {
+        if (node.clusterCell.timelyDensity > xi) {
+          if (node.dist(succ) > tau) {
+            val newCluster = mutable.LinkedHashSet.empty[ClusterCell]
+            clusters += newCluster
+            recAddToCluster(succ, newCluster, clusters)
+          } else {
+            recAddToCluster(succ, cluster, clusters)
+          }
         }
+      })
+    }
+
+  }
+
+  override def process(key: String, value: Option[ClusterCell]): Unit = {
+    var cellNode = cellNodes.find(p => p.key == key)
+    if (value.isDefined) {
+      if (cellNode.isDefined) {
+        cellNode.get.clusterCell = value.get
+        val dep = cellNode.get.dependentCell
+        if (dep.isDefined) {
+          dep.get.successors -= cellNode.get
+          cellNode.get.dependentCell = None
+        }
+      } else {
+        cellNode = Some(TreeNodeCell(value.get, None, key))
+        cellNodes += cellNode.get
       }
+
+      val (left, right) =
+        cellNodes.filter(_.key != key).partition(node => node < cellNode.get)
+      val newDep = left.unsorted
+        .map(node => (node.dist(cellNode.get), node))
+        .minByOption(_._1)
+      if (newDep.isDefined) {
+        cellNode.get.dependentCell = Some(newDep.get._2)
+        newDep.get._2.successors += cellNode.get
+      }
+      val newSucc = right.unsorted
+        .map(node => (node.dist(cellNode.get), node))
+        .minByOption(_._1)
+      if (newSucc.isDefined) {
+        if (newSucc.get._2.dependentCell.isDefined) {
+          newSucc.get._2.dependentCell.get.successors -= newSucc.get._2
+        }
+        newSucc.get._2.dependentCell = cellNode
+        cellNode.get.successors += newSucc.get._2
+      }
+    } else {
+      if (cellNode.isDefined && cellNode.get.dependentCell.isDefined) {
+        if (cellNode.get.successors.nonEmpty) {
+          cellNode.get.successors
+            .foreach(cellNode.get.dependentCell.get.successors += _)
+        }
+        cellNode.get.dependentCell.get.successors -= cellNode.get
+        cellNodes -= cellNode.get
+      }
+    }
+
+    val head = cellNodes.head
+    if (head.dependentCell.isDefined) {
+      print("called")
+      head.dependentCell.get.successors -= head
+      head.dependentCell = None
     }
   }
 

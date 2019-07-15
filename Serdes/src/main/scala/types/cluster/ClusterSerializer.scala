@@ -4,13 +4,19 @@ import java.util
 
 import org.apache.commons.lang3.SerializationUtils
 import org.apache.kafka.common.serialization.Serializer
+import types.cell.ClusterCell
 
-class ClusterSerializer extends Serializer[Cluster] {
+import scala.collection.mutable
+
+class ClusterSerializer
+    extends Serializer[
+      mutable.LinkedHashSet[mutable.LinkedHashSet[ClusterCell]]
+    ] {
   override def configure(configs: util.Map[String, _], isKey: Boolean): Unit = {}
 
   override def serialize(
     topic: String,
-    data: Cluster
+    data: mutable.LinkedHashSet[mutable.LinkedHashSet[ClusterCell]]
   ): Array[Byte] = {
     if (data == null) {
       return null
