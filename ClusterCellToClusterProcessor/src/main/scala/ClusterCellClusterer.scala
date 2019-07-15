@@ -21,15 +21,20 @@ object ClusterCellClusterer extends App {
   val clusterProcessorSupplier: ProcessorSupplier[String, ClusterCell] =
     () => new ClusterCellToClusteringProcessor
 
-  val clusterBufferStateStore = Stores.keyValueStoreBuilder(
-    Stores.inMemoryKeyValueStore("cluster-buffer-store"),
-    new StringSerde,
-    new ClusterSerde
-  )
+  val clusterBufferStateStore = Stores
+    .keyValueStoreBuilder(
+      Stores.inMemoryKeyValueStore("cluster-buffer-store"),
+      new StringSerde,
+      new ClusterSerde
+    )
+    .withLoggingDisabled()
 
   val config: Properties = {
     val p = new Properties
-    p.put(StreamsConfig.APPLICATION_ID_CONFIG, "cluster-cell-clusterer-application")
+    p.put(
+      StreamsConfig.APPLICATION_ID_CONFIG,
+      "cluster-cell-clusterer-application"
+    )
     val bootstrapServers = if (args.length > 0) args(0) else "msd-kafka:9092"
     p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers)
     p
@@ -54,7 +59,7 @@ object ClusterCellClusterer extends App {
       new ClusterSerializer,
       "cluster-cell-to-cluster-processor"
     )
-  .addStateStore(clusterBufferStateStore, "cluster-cell-to-cluster-processor")
+    .addStateStore(clusterBufferStateStore, "cluster-cell-to-cluster-processor")
 
   val streams: KafkaStreams = new KafkaStreams(topology, config)
 

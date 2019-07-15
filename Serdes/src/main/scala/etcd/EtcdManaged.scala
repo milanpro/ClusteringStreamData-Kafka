@@ -30,4 +30,14 @@ class EtcdManaged(etcdHost: String) {
     this.client.getKVClient
       .put(ByteSequence.from(key, UTF_8), ByteSequence.from(value, UTF_8))
   }
+
+  def getValue(key: String): String = {
+    this.client.getKVClient
+      .get(ByteSequence.from(key, UTF_8))
+      .get()
+      .getKvs
+      .get(0)
+      .getValue
+      .toString(UTF_8)
+  }
 }
