@@ -4,7 +4,9 @@ const ValueControl = (props: {key: string, buttonLabel: string, defaultVal: stri
   const [val, setVal] = useState(props.defaultVal);
   return <div style={{display:"flex", flexDirection:"row"}}>
     <input onChange={(e) => {setVal(e.target.value)}} value={val} type="text"/>
-    <button onClick={() => {fetch("/setval", {method: "POST", body: JSON.stringify({key: props.key, value: val})})}}>{props.buttonLabel}</button>
+    <button onClick={() => {fetch("/setval", {method: "POST",         headers: {
+            'Content-Type': 'application/json',
+        }, body: JSON.stringify({key: props.key, value: val})})}}>{props.buttonLabel}</button>
   </div>
 }
 
