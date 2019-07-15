@@ -32,8 +32,7 @@ case class TreeNodeCell(
   }
 }
 
-class ClusterCellToClusteringProcessor
-    extends Processor[String, Option[ClusterCell]] {
+class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
 
   var xi = 0
 
@@ -104,18 +103,18 @@ class ClusterCellToClusteringProcessor
 
   }
 
-  override def process(key: String, value: Option[ClusterCell]): Unit = {
+  override def process(key: String, value: ClusterCell): Unit = {
     var cellNode = cellNodes.find(p => p.key == key)
-    if (value.isDefined) {
+    if (value != null) {
       if (cellNode.isDefined) {
-        cellNode.get.clusterCell = value.get
+        cellNode.get.clusterCell = value
         val dep = cellNode.get.dependentCell
         if (dep.isDefined) {
           dep.get.successors -= cellNode.get
           cellNode.get.dependentCell = None
         }
       } else {
-        cellNode = Some(TreeNodeCell(value.get, None, key))
+        cellNode = Some(TreeNodeCell(value, None, key))
         cellNodes += cellNode.get
       }
 

@@ -18,7 +18,7 @@ import types.cluster.ClusterSerializer
 
 object ClusterCellClusterer extends App {
 
-  val clusterProcessorSupplier: ProcessorSupplier[String, Option[ClusterCell]] =
+  val clusterProcessorSupplier: ProcessorSupplier[String, ClusterCell] =
     () => new ClusterCellToClusteringProcessor
 
   val config: Properties = {
