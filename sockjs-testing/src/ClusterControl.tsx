@@ -1,23 +1,77 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from "react";
 
-const ValueControl = (props: {key: string, buttonLabel: string, defaultVal: string}) => {
+const ValueControl = (props: {
+  field: string,
+  buttonLabel: string,
+  defaultVal: string
+}) => {
   const [val, setVal] = useState(props.defaultVal);
-  return <div style={{display:"flex", flexDirection:"row"}}>
-    <input onChange={(e) => {setVal(e.target.value)}} value={val} type="text"/>
-    <button onClick={() => {fetch("/setval", {method: "POST",         headers: {
-            'Content-Type': 'application/json',
-        }, body: JSON.stringify({key: props.key, value: val})})}}>{props.buttonLabel}</button>
-  </div>
-}
+
+  useEffect(() => {
+    fetch(`/getval?key=${props.field}`)
+        .then(res => {
+            if (res.ok) {
+                return res.text();
+            } else {
+                throw new Error("Key not found")
+            }
+        })
+        .then(setVal)
+        .catch(console.error)
+  }, []);
+
+  return (
+      <div style={{ display: "flex", flexDirection: "row" }}>
+        <input
+            onChange={e => {
+              setVal(e.target.value);
+            }}
+            value={val}
+            type="text"
+        />
+        <button
+            onClick={() => {
+              fetch("/setval", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ key: props.field, value: val })
+              });
+            }}
+        >
+          {props.buttonLabel}
+        </button>
+      </div>
+  );
+};
 
 const ClusterControl = () => {
-  return <>
-    <ValueControl key="p2cc/radius" buttonLabel="Change Radius" defaultVal="10" />
-    <ValueControl key="p2cc/decay" buttonLabel="Change Decay" defaultVal="0.898" />
-    <ValueControl key="p2cc/lambda" buttonLabel="Change Lambda" defaultVal="1" />
-    <ValueControl key="cc2c/xi" buttonLabel="Change XI" defaultVal="0" />
-    <ValueControl key="cc2c/tau" buttonLabel="Change Tau" defaultVal="10" />
-    <ValueControl key="gen/pointDelay" buttonLabel="Change Point Delay" defaultVal="100" />
-  </>
-}
+  return (
+      <>
+        <ValueControl
+            field="p2cc/radius"
+            buttonLabel="Change Radius"
+            defaultVal="10"
+        />
+        <ValueControl
+            field="p2cc/decay"
+            buttonLabel="Change Decay"
+            defaultVal="0.898"
+        />
+        <ValueControl
+            field="p2cc/lambda"
+            buttonLabel="Change Lambda"
+            defaultVal="1"
+        />
+        <ValueControl field="cc2c/xi" buttonLabel="Change XI" defaultVal="0" />
+        <ValueControl field="cc2c/tau" buttonLabel="Change Tau" defaultVal="10" />
+        <ValueControl
+            field="gen/pointDelay"
+            buttonLabel="Change Point Delay"
+            defaultVal="100"
+        />
+      </>
+  );
+};
 export default ClusterControl;
