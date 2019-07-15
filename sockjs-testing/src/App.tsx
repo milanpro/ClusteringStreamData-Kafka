@@ -56,7 +56,11 @@ const App: React.FC = () => {
               if (clusterCellEvent.value && clusterCellEvent.value.timelyDensity > 0.8){
                 clusterCellBuffer.push(clusterCellEvent)
               }
-              scatterChart.data!.datasets![1].data! = clusterCellBuffer.map(e => e.value.seedPoint);
+              scatterChart.data!.datasets![1].data! = clusterCellBuffer.map(e => ({
+                x: e.value.seedPoint.x,
+                y: e.value.seedPoint.y,
+                r: e.value.timelyDensity
+              }));
               scatterChart.update({duration: 0});
           }
 
@@ -85,11 +89,13 @@ const App: React.FC = () => {
             datasets: [
               {
                 label: "points",
+                backgroundColor: "rgba(255, 99, 132, 0.7)",
                 data: []
               },
               {
+                type: "bubble",
                 label: "cluster-cells",
-                pointBackgroundColor: "blue",
+                backgroundColor: "blue",
                 data: []
               }
             ]
