@@ -1,0 +1,45 @@
+plugins {
+    id 'idea'
+    id 'base'
+}
+
+group 'de.hpi.msd'
+version '1.0-SNAPSHOT'
+
+task npmBuild(type: Exec) {
+    inputs.file("package.json")
+    inputs.dir("src")
+    outputs.dir("build")
+
+    commandLine "npm", "run", "build"
+}
+
+configure(npmBuild) {
+    group = 'build'
+    description = 'Executes npm run build'
+}
+
+task distJar(type: Jar) {
+    dependsOn npmBuild
+    from('build') {
+        into 'resources/public'
+    }
+}
+
+configure(distJar) {
+    group = 'distribution'
+    description = 'Builds a jar containing all frontend Files'
+
+    archiveBaseName = 'WebServerFrontend'
+    destinationDirectory = file("${projectDir}/build_out")
+}
+
+assemble.dependsOn(distJar)
+
+artifacts {
+    archives distJar
+}
+
+clean {
+    delete distJar.destinationDirectory
+}

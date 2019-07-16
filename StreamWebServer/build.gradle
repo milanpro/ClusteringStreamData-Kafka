@@ -28,4 +28,5 @@ dependencies {
     implementation "org.springframework.kafka:spring-kafka"
     implementation 'com.google.code.gson:gson'
     implementation project(':Serdes')
-    }
+    runtimeOnly project(path: ':StreamWebServerFrontend', configuration: 'archives')
+}
