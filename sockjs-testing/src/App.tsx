@@ -71,11 +71,13 @@ const App: React.FC = () => {
           const clustersEvent: KafkaClustersEvent = JSON.parse(value.body);
           let newData: Chart.ChartPoint[] = []
           let newColor: Chart.ChartColor[] = []
+          let num = 0;
           for (let cluster of clustersEvent.value.clusters) {
             const cells = cluster.cluster;
             newData = newData.concat(cells.map(cell => cell.seedPoint));
-            const color = `rgba(${Math.random()},${Math.random()},${Math.random()},1)`;
+            const color = num == 0 ? "blue" : num == 1 ? "red" : "green";
             newColor = newColor.concat(cells.map(() => color));
+            num = num +1;
           }
           scatterChart.data!.datasets![2].data! = newData;
           scatterChart.data!.datasets![2].backgroundColor = newColor;
@@ -102,7 +104,7 @@ const App: React.FC = () => {
             datasets: [
               {
                 label: "points",
-                backgroundColor: "rgba(255, 99, 132, 0.7)",
+                backgroundColor: "rgba(255, 99, 132, 0.4)",
                 data: []
               },
               {
