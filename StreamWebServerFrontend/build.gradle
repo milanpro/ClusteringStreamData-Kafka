@@ -22,7 +22,7 @@ configure(npmBuild) {
 task distJar(type: Jar) {
     dependsOn npmBuild
     from('build') {
-        into 'resources/public'
+        into 'public'
     }
 }
 
