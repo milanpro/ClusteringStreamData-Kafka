@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.messaging.simp.SimpMessagingTemplate
 import types.cell.ClusterCell
+import types.cluster.Clusters
 import types.point.{Point, PointDeserializer}
 
 import scala.collection.mutable
@@ -43,9 +44,7 @@ class StreamWebServerService {
     containerFactory = "kafkaListenerClusterContainerFactory"
   )
   def consumeCluster(
-    @Payload cluster: ConsumerRecord[String, mutable.LinkedHashSet[
-      mutable.LinkedHashSet[ClusterCell]
-    ]]
+    @Payload cluster: ConsumerRecord[String, Clusters]
   ): Unit = {
     template.convertAndSend(
       "/topic/clusters",

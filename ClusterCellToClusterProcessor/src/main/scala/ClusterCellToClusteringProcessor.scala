@@ -1,6 +1,7 @@
 import java.time.Duration
 import java.time.temporal.ChronoUnit
 import java.util.UUID
+import java.util.concurrent.Semaphore
 
 import etcd.EtcdManaged
 import org.apache.kafka.streams.processor.{
@@ -9,15 +10,15 @@ import org.apache.kafka.streams.processor.{
   PunctuationType,
   Punctuator
 }
-
 import types.cell.ClusterCell
+import types.cluster.{Cluster, Clusters}
 
 import scala.collection.mutable
 
-case class TreeNodeCell(
+class TreeNodeCell(
   var clusterCell: ClusterCell,
   var dependentCell: Option[TreeNodeCell],
-  key: String,
+  var key: String,
   var successors: mutable.TreeSet[TreeNodeCell] = mutable.TreeSet.empty
 ) extends Ordered[TreeNodeCell] {
   override def compare(that: TreeNodeCell): Int = {
@@ -32,23 +33,26 @@ case class TreeNodeCell(
   }
 
   override def hashCode(): Int = {
-    println(this.successors.size)
-    key.hashCode
+    this.key.hashCode
   }
 
   override def toString: String = {
-    key
+    this.key
   }
+
 }
 
 class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
 
   var xi = 0
 
-  var tau = 10
+  var tau = 25
+
+  var depth = 0
 
   private var context: ProcessorContext = _
   private val cellNodes: mutable.SortedSet[TreeNodeCell] = mutable.SortedSet()
+  private var syncSemaphore = new Semaphore(1)
 
   override def init(context: ProcessorContext): Unit = {
     this.context = context
@@ -63,7 +67,7 @@ class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
       tau = value.toInt
     })
 
-    val duration = Duration.of(1, ChronoUnit.SECONDS)
+    val duration = Duration.of(5, ChronoUnit.SECONDS)
 
     context.schedule(
       duration,
@@ -74,11 +78,12 @@ class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
 
   private def buildClusters =
     (_ => {
+      syncSemaphore.acquire()
       val root = cellNodes.find(_.dependentCell.isEmpty)
       val clusters =
-        mutable.LinkedHashSet.empty[mutable.LinkedHashSet[ClusterCell]]
-      val rootCluster = mutable.LinkedHashSet.empty[ClusterCell]
-      clusters += rootCluster
+        mutable.ListBuffer.empty[mutable.ListBuffer[ClusterCell]]
+      val rootCluster = mutable.ListBuffer.empty[ClusterCell]
+      clusters :+ rootCluster
       if (root.isDefined) {
         recAddToCluster(
           root.get,
@@ -86,25 +91,32 @@ class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
           clusters
         )
       }
-      context.forward(UUID.randomUUID.toString, clusters)
+      val id = UUID.randomUUID.toString
+      context.forward(
+        id,
+        Clusters(clusters.map(list => Cluster(list.toArray)).toArray)
+      )
       context.commit()
+      syncSemaphore.release()
     }): Punctuator
 
   private def recAddToCluster(
     node: TreeNodeCell,
-    cluster: mutable.Set[ClusterCell],
-    clusters: mutable.LinkedHashSet[mutable.LinkedHashSet[ClusterCell]]
+    cluster: mutable.ListBuffer[ClusterCell],
+    clusters: mutable.ListBuffer[mutable.ListBuffer[ClusterCell]]
   ): Unit = {
-    cluster += node.clusterCell
+    cluster :+ node.clusterCell
     if (node.successors.nonEmpty) {
       node.successors.foreach(succ => {
         if (node.clusterCell.timelyDensity > xi) {
           if (node.dist(succ) > tau) {
-            val newCluster = mutable.LinkedHashSet.empty[ClusterCell]
-            clusters += newCluster
+            val newCluster = mutable.ListBuffer.empty[ClusterCell]
+            clusters :+ newCluster
             recAddToCluster(succ, newCluster, clusters)
           } else {
-            recAddToCluster(succ, cluster, clusters)
+            if (!cluster.contains(succ.clusterCell)) {
+              recAddToCluster(succ, cluster, clusters)
+            }
           }
         }
       })
@@ -113,56 +125,44 @@ class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
   }
 
   override def process(key: String, value: ClusterCell): Unit = {
+    syncSemaphore.acquire()
+
     var cellNode = cellNodes.find(p => p.key == key)
     if (value != null) {
       if (cellNode.isDefined) {
         cellNode.get.clusterCell = value
         val dep = cellNode.get.dependentCell
-        if (dep.isDefined) {
-          dep.get.successors -= cellNode.get
-          cellNode.get.dependentCell = None
+        if (dep.isDefined && dep.get.key != value.dependentClusterCell.orNull || dep.isEmpty && value.dependentClusterCell.isDefined) {
+          if (dep.isDefined) {
+            dep.get.successors.remove(cellNode.get)
+          }
+          val newDep =
+            cellNodes.find(p => p.key == value.dependentClusterCell.orNull)
+          if (newDep.isDefined) {
+            newDep.get.successors.add(cellNode.get)
+            cellNode.get.dependentCell = newDep
+          }
         }
       } else {
-        cellNode = Some(TreeNodeCell(value, None, key))
-        cellNodes += cellNode.get
+        cellNode = Some(
+          new TreeNodeCell(
+            value,
+            cellNodes.find(p => p.key == value.dependentClusterCell.orNull),
+            key
+          )
+        )
+        cellNodes.add(cellNode.get)
       }
 
-      val (left, right) =
-        cellNodes.filter(_.key != key).partition(node => node < cellNode.get)
-      val newDep = left.unsorted
-        .map(node => (node.dist(cellNode.get), node))
-        .minByOption(_._1)
-      if (newDep.isDefined) {
-        cellNode.get.dependentCell = Some(newDep.get._2)
-        newDep.get._2.successors += cellNode.get
-      }
-      val newSucc = right.unsorted
-        .map(node => (node.dist(cellNode.get), node))
-        .minByOption(_._1)
-      if (newSucc.isDefined) {
-        if (newSucc.get._2.dependentCell.isDefined) {
-          newSucc.get._2.dependentCell.get.successors -= newSucc.get._2
-        }
-        newSucc.get._2.dependentCell = cellNode
-        cellNode.get.successors += newSucc.get._2
-      }
     } else {
-      if (cellNode.isDefined && cellNode.get.dependentCell.isDefined) {
-        if (cellNode.get.successors.nonEmpty) {
-          cellNode.get.successors
-            .foreach(cellNode.get.dependentCell.get.successors += _)
+      if (cellNode.isDefined) {
+        if (cellNode.get.dependentCell.isDefined) {
+          cellNode.get.dependentCell.get.successors.remove(cellNode.get)
         }
-        cellNode.get.dependentCell.get.successors -= cellNode.get
-        cellNodes -= cellNode.get
+        cellNodes.remove(cellNode.get)
       }
     }
-
-    val head = cellNodes.head
-    if (head.dependentCell.isDefined) {
-      print("called")
-      head.dependentCell.get.successors -= head
-      head.dependentCell = None
-    }
+    syncSemaphore.release()
   }
 
   override def close(): Unit = {}
