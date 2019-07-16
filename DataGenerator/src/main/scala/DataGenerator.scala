@@ -29,7 +29,7 @@ object DataGenerator extends App {
   x = (10.0, 110.0)
   y = (8.0, 110.0)
   distributions.addOne((x, y))
-  x = (4.0, 90.0)
+  x = (10.0, 90.0)
   y = (10.0, 10.0)
   distributions.addOne((x, y))
 
@@ -40,8 +40,8 @@ object DataGenerator extends App {
   })
 
   etcdClient.watchWithCb("gen/cluster1x", value => {
-    x = (20.0, value.toDouble)
-    y = (20.0, 10.0)
+    x = (10.0, value.toDouble)
+    y = (10.0, 10.0)
     distributions.remove(2)
     distributions.addOne((x, y))
   })
