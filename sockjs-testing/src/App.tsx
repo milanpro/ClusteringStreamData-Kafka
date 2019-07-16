@@ -75,7 +75,7 @@ const App: React.FC = () => {
           for (let cluster of clustersEvent.value.clusters) {
             const cells = cluster.cluster;
             newData = newData.concat(cells.map(cell => cell.seedPoint));
-            const color = num == 0 ? "blue" : num == 1 ? "red" : "green";
+            const color = num === 0 ? "blue" : num === 1 ? "red" : "green";
             newColor = newColor.concat(cells.map(() => color));
             num = num +1;
           }
