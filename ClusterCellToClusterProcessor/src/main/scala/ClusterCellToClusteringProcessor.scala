@@ -18,7 +18,7 @@ case class TreeNodeCell(
   var clusterCell: ClusterCell,
   var dependentCell: Option[TreeNodeCell],
   key: String,
-  var successors: mutable.Set[TreeNodeCell] = mutable.Set.empty
+  var successors: mutable.TreeSet[TreeNodeCell] = mutable.TreeSet.empty
 ) extends Ordered[TreeNodeCell] {
   override def compare(that: TreeNodeCell): Int = {
     this.clusterCell.timelyDensity.compareTo(that.clusterCell.timelyDensity)
@@ -29,6 +29,15 @@ case class TreeNodeCell(
       math.pow(this.clusterCell.seedPoint.x - that.clusterCell.seedPoint.x, 2) + math
         .pow(this.clusterCell.seedPoint.y - that.clusterCell.seedPoint.y, 2)
     )
+  }
+
+  override def hashCode(): Int = {
+    println(this.successors.size)
+    key.hashCode
+  }
+
+  override def toString: String = {
+    key
   }
 }
 
