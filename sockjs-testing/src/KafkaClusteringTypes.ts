@@ -12,6 +12,12 @@ export interface KafkaClusterCell {
   timelyDensity: number
 }
 
+export interface KafkaClusters {
+  clusters: {
+    cluster: KafkaClusterCell[]
+  }[]
+}
+
 export type KafkaEvent<T> = {
   headers: {
     headers: any[];
@@ -30,4 +36,5 @@ export type KafkaEvent<T> = {
 
 export type KafkaPointEvent = KafkaEvent<KafkaPoint>;
 export type KafkaClusterCellEvent = KafkaEvent<KafkaClusterCell>;
+export type KafkaClustersEvent = KafkaEvent<KafkaClusters>;
 export type KafkaClusterCellDeleteEvent = KafkaEvent<undefined>;
