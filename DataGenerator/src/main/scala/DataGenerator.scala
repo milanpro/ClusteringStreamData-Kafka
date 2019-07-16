@@ -20,16 +20,18 @@ object DataGenerator extends App {
   val kafkaProducer =
     new KafkaProducer[String, Point](properties, stringSer, pointSer)
 
-  var distributions: List[((Double, Double), (Double, Double))] = List()
-
-  val distriCount = Random.nextInt(3) + 2
-
-  for (_ <- 0 to distriCount) {
-    distributions = (
-      (Random.nextDouble() * 25, Random.nextDouble() * 100),
-      (Random.nextDouble() * 25, Random.nextDouble() * 100)
-    ) :: distributions
-  }
+  var distributions: scala.collection.mutable.ListBuffer[
+    ((Double, Double), (Double, Double))
+  ] = scala.collection.mutable.ListBuffer.empty
+  var x = (15.0, 20.0)
+  var y = (10.0, 70.0)
+  distributions.addOne((x, y))
+  x = (10.0, 110.0)
+  y = (8.0, 110.0)
+  distributions.addOne((x, y))
+  x = (4.0, 90.0)
+  y = (10.0, 10.0)
+  distributions.addOne((x, y))
 
   var pointDelay = 100
 
@@ -37,8 +39,15 @@ object DataGenerator extends App {
     pointDelay = value.toInt
   })
 
+  etcdClient.watchWithCb("gen/cluster1x", value => {
+    x = (20.0, value.toDouble)
+    y = (20.0, 10.0)
+    distributions.remove(2)
+    distributions.addOne((x, y))
+  })
+
   while (true) {
-    val index = Random.nextInt(distriCount)
+    val index = Random.nextInt(3)
     val distrib = distributions(index)
     val point = Point(
       Random.nextGaussian() * distrib._1._1 + distrib._1._2,

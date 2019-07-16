@@ -71,6 +71,11 @@ const ClusterControl = () => {
             buttonLabel="Change Point Delay"
             defaultVal="100"
         />
+        <ValueControl
+            field="gen/cluster1x"
+            buttonLabel="Move Cluster 3 on x-axis"
+            defaultVal="90.0"
+        />
       </div>
   );
 };
