@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Button, Input } from 'reactstrap';
 
 const ValueControl = (props: {
   field: string,
@@ -21,15 +22,18 @@ const ValueControl = (props: {
   }, []);
 
   return (
-      <div style={{ display: "flex", flexDirection: "row", margin: "10px" }}>
-        <input
+      <div style={{ display: "flex", flexDirection: "row", margin: "10px", height: 64 }}>
+        <Input
+        style={{width: "30%", paddingRight: 10, marginRight: 10, height: 64}}
             onChange={e => {
               setVal(e.target.value);
             }}
             value={val}
             type="text"
         />
-        <button
+        <Button
+        color="primary"
+        style={{width: "70%"}}
             onClick={() => {
               fetch("/setval", {
                 method: "POST",
@@ -41,14 +45,14 @@ const ValueControl = (props: {
             }}
         >
           {props.buttonLabel}
-        </button>
+        </Button>
       </div>
   );
 };
 
 const ClusterControl = () => {
   return (
-      <div style={{marginTop: "50px"}}>
+      <div style={{marginTop: "30px"}}>
         <ValueControl
             field="p2cc/radius"
             buttonLabel="Change Radius"

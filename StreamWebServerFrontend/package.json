@@ -4,23 +4,25 @@
   "private": true,
   "dependencies": {
     "@stomp/stompjs": "^5.4.2",
+    "@types/chart.js": "^2.7.55",
     "@types/jest": "24.0.15",
     "@types/node": "12.0.10",
     "@types/react": "16.8.22",
     "@types/react-dom": "16.8.4",
     "@types/stompjs": "^2.3.4",
-    "@types/chart.js": "^2.7.55",
+    "bootstrap": "^4.3.1",
+    "chart.js": "^2.8.0",
     "http-proxy-middleware": "^0.19.1",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
     "react-scripts": "3.0.1",
+    "reactstrap": "^8.0.1",
     "sockjs": "^0.3.19",
     "sockjs-client": "^1.3.0",
     "stomp": "^0.1.1",
     "stompjs": "^2.3.3",
     "typescript": "3.5.2",
-    "websocket": "^1.0.28",
-    "chart.js": "^2.8.0"
+    "websocket": "^1.0.28"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -44,6 +46,7 @@
     ]
   },
   "devDependencies": {
+    "@types/reactstrap": "^8.0.1",
     "@types/sockjs": "^0.3.31",
     "@types/sockjs-client": "^1.1.1"
   }
