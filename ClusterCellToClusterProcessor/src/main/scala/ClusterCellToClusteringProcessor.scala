@@ -19,12 +19,8 @@ class TreeNodeCell(
   var clusterCell: ClusterCell,
   var dependentCell: Option[TreeNodeCell],
   var key: String,
-  var successors: mutable.TreeSet[TreeNodeCell] = mutable.TreeSet.empty
-) extends Ordered[TreeNodeCell] {
-  override def compare(that: TreeNodeCell): Int = {
-    this.clusterCell.timelyDensity.compareTo(that.clusterCell.timelyDensity)
-  }
-
+  var successors: mutable.Set[TreeNodeCell] = mutable.HashSet.empty
+) {
   def dist(that: TreeNodeCell): Double = {
     math.sqrt(
       math.pow(this.clusterCell.seedPoint.x - that.clusterCell.seedPoint.x, 2) + math
@@ -40,6 +36,21 @@ class TreeNodeCell(
     this.key
   }
 
+  def print(): Unit = {
+    print("", isTail = true)
+  }
+
+  def print(prefix: String, isTail: Boolean): Unit = {
+    println(prefix + (if (isTail) "└── " else "├── ") + key)
+
+    successors.foreach(
+      _.print(prefix + (if (isTail) "    " else "│   "), isTail = false)
+    )
+
+    successors.lastOption.foreach(
+      _.print(prefix + (if (isTail) "    " else "│   "), isTail = true)
+    )
+  }
 }
 
 class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
@@ -51,7 +62,7 @@ class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
   var depth = 0
 
   private var context: ProcessorContext = _
-  private val cellNodes: mutable.SortedSet[TreeNodeCell] = mutable.SortedSet()
+  private val cellNodes: mutable.HashSet[TreeNodeCell] = mutable.HashSet.empty
   private var syncSemaphore = new Semaphore(1)
 
   override def init(context: ProcessorContext): Unit = {
@@ -78,12 +89,11 @@ class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
 
   private def buildClusters =
     (_ => {
-      syncSemaphore.acquire()
       val root = cellNodes.find(_.dependentCell.isEmpty)
       val clusters =
         mutable.ListBuffer.empty[mutable.ListBuffer[ClusterCell]]
       val rootCluster = mutable.ListBuffer.empty[ClusterCell]
-      clusters :+ rootCluster
+      clusters += rootCluster
       if (root.isDefined) {
         recAddToCluster(
           root.get,
@@ -92,12 +102,13 @@ class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
         )
       }
       val id = UUID.randomUUID.toString
-      context.forward(
-        id,
-        Clusters(clusters.map(list => Cluster(list.toArray)).toArray)
+
+      val output = new Clusters(
+        clusters.map(list => new Cluster(list.toArray)).toArray
       )
+
+      context.forward(id, output)
       context.commit()
-      syncSemaphore.release()
     }): Punctuator
 
   private def recAddToCluster(
@@ -105,13 +116,13 @@ class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
     cluster: mutable.ListBuffer[ClusterCell],
     clusters: mutable.ListBuffer[mutable.ListBuffer[ClusterCell]]
   ): Unit = {
-    cluster :+ node.clusterCell
+    cluster += node.clusterCell
     if (node.successors.nonEmpty) {
       node.successors.foreach(succ => {
         if (node.clusterCell.timelyDensity > xi) {
           if (node.dist(succ) > tau) {
             val newCluster = mutable.ListBuffer.empty[ClusterCell]
-            clusters :+ newCluster
+            clusters += newCluster
             recAddToCluster(succ, newCluster, clusters)
           } else {
             if (!cluster.contains(succ.clusterCell)) {
@@ -125,8 +136,6 @@ class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
   }
 
   override def process(key: String, value: ClusterCell): Unit = {
-    syncSemaphore.acquire()
-
     var cellNode = cellNodes.find(p => p.key == key)
     if (value != null) {
       if (cellNode.isDefined) {
@@ -135,6 +144,7 @@ class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
         if (dep.isDefined && dep.get.key != value.dependentClusterCell.orNull || dep.isEmpty && value.dependentClusterCell.isDefined) {
           if (dep.isDefined) {
             dep.get.successors.remove(cellNode.get)
+            cellNode.get.dependentCell = None
           }
           val newDep =
             cellNodes.find(p => p.key == value.dependentClusterCell.orNull)
@@ -162,7 +172,6 @@ class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
         cellNodes.remove(cellNode.get)
       }
     }
-    syncSemaphore.release()
   }
 
   override def close(): Unit = {}
