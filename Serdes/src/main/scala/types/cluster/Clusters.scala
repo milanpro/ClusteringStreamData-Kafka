@@ -1,3 +1,3 @@
 package types.cluster
 
-case class Clusters(clusters: Array[Cluster]) extends Serializable
+class Clusters(var clusters: Array[Cluster]) extends Serializable
