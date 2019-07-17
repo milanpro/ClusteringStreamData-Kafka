@@ -1,7 +1,6 @@
 import java.time.Duration
 import java.time.temporal.ChronoUnit
 import java.util.UUID
-import java.util.concurrent.Semaphore
 
 import etcd.EtcdManaged
 import org.apache.kafka.streams.processor.{
@@ -16,18 +15,11 @@ import types.cluster.{Cluster, Clusters}
 import scala.collection.mutable
 
 class TreeNodeCell(
-  var clusterCell: ClusterCell,
+  var clusterCell: Option[ClusterCell],
   var dependentCell: Option[TreeNodeCell],
   var key: String,
   var successors: mutable.Set[TreeNodeCell] = mutable.HashSet.empty
 ) {
-  def dist(that: TreeNodeCell): Double = {
-    math.sqrt(
-      math.pow(this.clusterCell.seedPoint.x - that.clusterCell.seedPoint.x, 2) + math
-        .pow(this.clusterCell.seedPoint.y - that.clusterCell.seedPoint.y, 2)
-    )
-  }
-
   override def hashCode(): Int = {
     this.key.hashCode
   }
@@ -55,20 +47,18 @@ class TreeNodeCell(
 
 class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
 
-  var xi = 0
+  val etcdClient = new EtcdManaged("http://msd-etcd:2379")
 
-  var tau = 25
-
-  var depth = 0
-
-  private var context: ProcessorContext = _
   private val cellNodes: mutable.HashSet[TreeNodeCell] = mutable.HashSet.empty
-  private var syncSemaphore = new Semaphore(1)
+  var xi: Int = etcdClient.setValue("cc2c/xi", "0").toInt
+  var tau: Int = etcdClient.setValue("cc2c/tau", "25").toInt
+  var depth: Int = 0
+  private var context: ProcessorContext = _
+  private var clusterCellBuffer: mutable.Queue[(String, ClusterCell)] =
+    mutable.Queue.empty
 
   override def init(context: ProcessorContext): Unit = {
     this.context = context
-
-    val etcdClient = new EtcdManaged("http://msd-etcd:2379")
 
     etcdClient.watchWithCb("cc2c/xi", value => {
       xi = value.toInt
@@ -89,57 +79,20 @@ class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
 
   private def buildClusters =
     (_ => {
-      val root = cellNodes.find(_.dependentCell.isEmpty)
-      val clusters =
-        mutable.ListBuffer.empty[mutable.ListBuffer[ClusterCell]]
-      val rootCluster = mutable.ListBuffer.empty[ClusterCell]
-      clusters += rootCluster
-      if (root.isDefined) {
-        recAddToCluster(
-          root.get,
-          rootCluster,
-          clusters
-        )
+      val clusterCellEventQueue = clusterCellBuffer
+      clusterCellBuffer = mutable.Queue.empty
+      while (clusterCellEventQueue.nonEmpty) {
+        val cellEvent = clusterCellEventQueue.dequeue()
+        processClusterCell(cellEvent._1, cellEvent._2)
       }
-      val id = UUID.randomUUID.toString
-
-      val output = new Clusters(
-        clusters.map(list => new Cluster(list.toArray)).toArray
-      )
-
-      context.forward(id, output)
-      context.commit()
+      calcAndEmitClusters()
     }): Punctuator
 
-  private def recAddToCluster(
-    node: TreeNodeCell,
-    cluster: mutable.ListBuffer[ClusterCell],
-    clusters: mutable.ListBuffer[mutable.ListBuffer[ClusterCell]]
-  ): Unit = {
-    cluster += node.clusterCell
-    if (node.successors.nonEmpty) {
-      node.successors.foreach(succ => {
-        if (node.clusterCell.timelyDensity > xi) {
-          if (node.dist(succ) > tau) {
-            val newCluster = mutable.ListBuffer.empty[ClusterCell]
-            clusters += newCluster
-            recAddToCluster(succ, newCluster, clusters)
-          } else {
-            if (!cluster.contains(succ.clusterCell)) {
-              recAddToCluster(succ, cluster, clusters)
-            }
-          }
-        }
-      })
-    }
-
-  }
-
-  override def process(key: String, value: ClusterCell): Unit = {
+  private def processClusterCell(key: String, value: ClusterCell): Unit = {
     var cellNode = cellNodes.find(p => p.key == key)
     if (value != null) {
       if (cellNode.isDefined) {
-        cellNode.get.clusterCell = value
+        cellNode.get.clusterCell = Some(value)
         val dep = cellNode.get.dependentCell
         if (dep.isDefined && dep.get.key != value.dependentClusterCell.orNull || dep.isEmpty && value.dependentClusterCell.isDefined) {
           if (dep.isDefined) {
@@ -151,16 +104,40 @@ class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
           if (newDep.isDefined) {
             newDep.get.successors.add(cellNode.get)
             cellNode.get.dependentCell = newDep
+          } else if (value.dependentClusterCell.isDefined) {
+            val createdDep = new TreeNodeCell(
+              Option.empty,
+              Option.empty,
+              value.dependentClusterCell.get
+            )
+            createdDep.successors.add(cellNode.get)
+            cellNode.get.dependentCell = Some(createdDep)
+            cellNodes.add(createdDep)
           }
         }
       } else {
+        var dep =
+          cellNodes.find(p => p.key == value.dependentClusterCell.orNull)
+        if (value.dependentClusterCell.isDefined && dep.isEmpty) {
+          dep = Some(
+            new TreeNodeCell(
+              Option.empty,
+              Option.empty,
+              value.dependentClusterCell.get
+            )
+          )
+          cellNodes.add(dep.get)
+        }
         cellNode = Some(
           new TreeNodeCell(
-            value,
-            cellNodes.find(p => p.key == value.dependentClusterCell.orNull),
+            Some(value),
+            dep,
             key
           )
         )
+        if (dep.isDefined) {
+          dep.get.successors.add(cellNode.get)
+        }
         cellNodes.add(cellNode.get)
       }
 
@@ -174,5 +151,64 @@ class ClusterCellToClusteringProcessor extends Processor[String, ClusterCell] {
     }
   }
 
+  private def calcAndEmitClusters(): Unit = {
+    val root = cellNodes
+      .filter(_.clusterCell.isDefined)
+      .maxByOption(_.clusterCell.get.timelyDensity)
+    val clusters =
+      mutable.ListBuffer.empty[mutable.ListBuffer[ClusterCell]]
+    if (root.isDefined) {
+      recAddToCluster(
+        root.get,
+        null,
+        clusters
+      )
+    }
+    val id = UUID.randomUUID.toString
+
+    val output = new Clusters(
+      clusters.map(list => new Cluster(list.toArray)).toArray
+    )
+
+    context.forward(id, output)
+    context.commit()
+  }
+
+  override def process(key: String, value: ClusterCell): Unit = {
+    clusterCellBuffer.enqueue((key, value))
+  }
+
   override def close(): Unit = {}
+
+  private def recAddToCluster(
+    node: TreeNodeCell,
+    cluster: mutable.ListBuffer[ClusterCell],
+    clusters: mutable.ListBuffer[mutable.ListBuffer[ClusterCell]]
+  ): Unit = {
+    var successorCluster = cluster
+    val cellIsDenseEnough = node.clusterCell.isDefined && node.clusterCell.get.timelyDensity > xi
+
+    /**
+      * Create cluster if necessary and add cluster-cell to cluster
+      */
+    if (cellIsDenseEnough) {
+      val cellInNewCluster = node.clusterCell.get.dependentDistance.isDefined && node.clusterCell.get.dependentDistance.get > tau
+      if (cellInNewCluster || node.clusterCell.get.dependentDistance.isEmpty || successorCluster == null) {
+        successorCluster = mutable.ListBuffer.empty[ClusterCell]
+        clusters.addOne(successorCluster)
+      }
+      successorCluster.addOne(node.clusterCell.get)
+    }
+
+    /**
+      * Go recursively through successors of cluster-cell
+      */
+    if (node.successors.nonEmpty && (cellIsDenseEnough || node.clusterCell.isEmpty)) {
+      node.successors.foreach(succ => {
+        if (!successorCluster.contains(succ.clusterCell.get)) {
+          recAddToCluster(succ, successorCluster, clusters)
+        }
+      })
+    }
+  }
 }

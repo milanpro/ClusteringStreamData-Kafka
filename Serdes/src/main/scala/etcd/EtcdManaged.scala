@@ -26,9 +26,10 @@ class EtcdManaged(etcdHost: String) {
     })
   }
 
-  def setValue(key: String, value: String): Unit = {
+  def setValue(key: String, value: String): String = {
     this.client.getKVClient
       .put(ByteSequence.from(key, UTF_8), ByteSequence.from(value, UTF_8))
+    value
   }
 
   def getValue(key: String): String = {

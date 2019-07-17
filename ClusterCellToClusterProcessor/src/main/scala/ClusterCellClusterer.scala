@@ -1,19 +1,13 @@
 import java.time.Duration
 import java.util.Properties
 
-import org.apache.kafka.common.serialization.Serdes.StringSerde
 import org.apache.kafka.common.serialization.{
   StringDeserializer,
   StringSerializer
 }
 import org.apache.kafka.streams.processor.ProcessorSupplier
-import org.apache.kafka.streams.state.Stores
 import org.apache.kafka.streams.{KafkaStreams, StreamsConfig, Topology}
-import types.cell.{ClusterCellSerde, ClusterCellSerializer}
-import types.point.{Point, PointDeserializer, PointSerde}
-import types.cell.ClusterCell
-import types.cluster.ClusterSerde
-import types.cell.ClusterCellDeserializer
+import types.cell.{ClusterCell, ClusterCellDeserializer}
 import types.cluster.ClusterSerializer
 
 object ClusterCellClusterer extends App {

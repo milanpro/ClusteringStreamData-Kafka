@@ -25,11 +25,14 @@ import scala.jdk.CollectionConverters._
  */
 
 class PointToClusterCellProcessor extends Processor[String, Point] {
-  var r = 10
 
-  var a = 0.898
+  val etcdClient = new EtcdManaged("http://msd-etcd:2379")
 
-  var lambda = 1
+  var r: Int = etcdClient.setValue("p2cc/radius", "10").toInt
+
+  var a: Double = etcdClient.setValue("p2cc/decay", "0.898").toDouble
+
+  var lambda: Int = etcdClient.setValue("p2cc/lambda", "1").toInt
 
   var steppingtime = 1
 
@@ -56,8 +59,6 @@ class PointToClusterCellProcessor extends Processor[String, Point] {
       PunctuationType.WALL_CLOCK_TIME,
       processPoints
     )
-
-    val etcdClient = new EtcdManaged("http://msd-etcd:2379")
 
     etcdClient.watchWithCb("p2cc/radius", value => {
       r = value.toInt

@@ -8,10 +8,7 @@ import ClusterControl from "./ClusterControl";
 
 let scatterChart: Chart | undefined = undefined;
 
-let pointBuffer: any[] = [];
 let clusterCellBuffer: KafkaClusterCellEvent[] = [];
-const dataMaxSize = 500;
-const dataBatchSize = dataMaxSize / 20;
 
 const App: React.FC = () => {
   const [canvasRef, setRef] = useState<null | HTMLCanvasElement>(null);
@@ -30,21 +27,10 @@ const App: React.FC = () => {
           if (scatterChart) {
             const pointEvent: KafkaPointEvent = JSON.parse(value.body);
             let pointData = scatterChart.data!.datasets![0].data!;
-            if (pointBuffer.length === dataBatchSize) {
-              if (pointData.length >= 500) {
-                pointData = pointData.slice(
-                  dataBatchSize,
-                  pointData.length - 1
-                );
-              }
-              scatterChart.data!.datasets![0].data! = (pointData as any).concat(
-                pointBuffer
-              );
-              scatterChart.update({ duration: 0 });
-              pointBuffer = [];
-            } else {
-              pointBuffer.push(pointEvent.value);
+            if (pointData.length >= 500) {
+              pointData.shift()
             }
+            pointData.push(pointEvent.value as any);
           }
         });
         clusterCellSub = client.subscribe(
@@ -61,7 +47,6 @@ const App: React.FC = () => {
                 y: e.value.seedPoint.y,
                 r: e.value.timelyDensity
               }));
-              scatterChart.update({duration: 0});
           }
 
         }
@@ -81,7 +66,6 @@ const App: React.FC = () => {
           }
           scatterChart.data!.datasets![2].data! = newData;
           scatterChart.data!.datasets![2].backgroundColor = newColor;
-          scatterChart.update({duration: 0});
         }
         })
       }
@@ -132,6 +116,7 @@ const App: React.FC = () => {
             }
           }
         });
+        setInterval(() => scatterChart!.update({duration: 0}))
       }
     }
   }, [canvasRef]);

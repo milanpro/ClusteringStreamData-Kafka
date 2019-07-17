@@ -29,11 +29,11 @@ object DataGenerator extends App {
   x = (10.0, 110.0)
   y = (8.0, 110.0)
   distributions.addOne((x, y))
-  x = (10.0, 90.0)
+  x = (10.0, etcdClient.setValue("gen/cluster1x", "90.0").toDouble)
   y = (10.0, 10.0)
   distributions.addOne((x, y))
 
-  var pointDelay = 100
+  var pointDelay = etcdClient.setValue("gen/pointDelay", "10").toInt
 
   etcdClient.watchWithCb("gen/pointDelay", value => {
     pointDelay = value.toInt
