@@ -6,7 +6,18 @@ plugins {
 group 'de.hpi.msd'
 version '1.0-SNAPSHOT'
 
+task npmInstall(type: Exec) {
+    inputs.file("package.json")
+    commandLine "npm", "install"
+}
+
+configure(npmInstall) {
+    group = 'install'
+    description = 'Executes npm install'
+}
+
 task npmBuild(type: Exec) {
+    dependsOn npmInstall
     inputs.file("package.json")
     inputs.dir("src")
     outputs.dir("build")
