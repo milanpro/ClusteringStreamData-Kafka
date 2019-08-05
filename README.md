@@ -1,6 +1,6 @@
 # ClusteringStreamData-Kafka
 
-Reimplementation of the paper "Clustering Stream Data by Exploring the Evolution of Density Mountain" in the project seminar Mining Streaming Data at HPI
+Reimplementation of the paper "Clustering Stream Data by Exploring the Evolution of Density Mountain" in the project seminar Mining Streaming Data at HPI [Link](https://arxiv.org/abs/1710.00867)
 
 ## Prerequisites
 
