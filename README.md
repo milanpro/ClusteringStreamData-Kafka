@@ -4,15 +4,15 @@ Reimplementation of the paper "Clustering Stream Data by Exploring the Evolution
 
 ## Prerequisites
 
-- [gradle](https://gradle.org)
-- [docker and docker-compose](https://www.docker.com/get-started)
-- [node and npm](https://www.npmjs.com/get-npm)
+- [Java JDK (v8+)](https://www.oracle.com/technetwork/java/javase/downloads/index.html)
+- [Docker and Docker-Compose](https://www.docker.com/get-started)
+- [Node and NPM (v10+)](https://www.npmjs.com/get-npm)
 
 ## Getting Started
 
 1. Clone the repository via `git clone git@github.com:milanpro/ClusteringStreamData-Kafka.git`
 2. Start Docker deamon
-3. Build the application docker images by running `gradle dockerBuildImage` inside the folder
+3. Build the application docker images by running `./gradlew dockerBuildImage` inside the folder
 4. Run `docker-compose up` to start the kafka cluster locally
 5. Connect to `localhost:5656` with the browser of your choice
 
