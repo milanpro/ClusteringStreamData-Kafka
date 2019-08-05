@@ -10,9 +10,8 @@ import scala.util.Random
 object DataGenerator extends App {
 
   val properties = new Properties()
-  properties.put("bootstrap.servers", "msd-kafka:9092")
-
-  val etcdClient = new EtcdManaged("http://msd-etcd:2379")
+  properties.put("bootstrap.servers", sys.env("KAFKA_ADDR"))
+  val etcdClient = new EtcdManaged(sys.env("ETCD_ADDR"))
 
   val stringSer = new StringSerializer
   val pointSer = new PointSerializer

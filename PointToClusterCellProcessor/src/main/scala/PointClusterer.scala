@@ -36,8 +36,7 @@ object PointClusterer extends App {
   val config: Properties = {
     val p = new Properties
     p.put(StreamsConfig.APPLICATION_ID_CONFIG, "point-clusterer-application")
-    val bootstrapServers = if (args.length > 0) args(0) else "msd-kafka:9092"
-    p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers)
+    p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, sys.env("KAFKA_ADDR"))
     p.put(
       org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG,
       "point.clusterer"

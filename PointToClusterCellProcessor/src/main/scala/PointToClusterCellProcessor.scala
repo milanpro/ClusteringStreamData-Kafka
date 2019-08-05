@@ -26,7 +26,7 @@ import scala.jdk.CollectionConverters._
 
 class PointToClusterCellProcessor extends Processor[String, Point] {
 
-  val etcdClient = new EtcdManaged("http://msd-etcd:2379")
+  val etcdClient = new EtcdManaged(sys.env("ETCD_ADDR"))
 
   var r: Int = etcdClient.setValue("p2cc/radius", "10").toInt
 

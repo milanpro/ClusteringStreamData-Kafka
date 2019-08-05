@@ -21,6 +21,11 @@ docker {
     }
 }
 
+dockerCreateDockerfile {
+    environmentVariable 'WEBSRV_PORT', project.ext.websrv_port
+    environmentVariable 'KAFKA_ADDR', project.ext.kafka_addr
+}
+
 dependencies {
     implementation "org.springframework.boot:spring-boot-starter-websocket"
     implementation "org.springframework.boot:spring-boot-starter-web"

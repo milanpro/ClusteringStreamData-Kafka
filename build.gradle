@@ -11,4 +11,11 @@ subprojects {
             implementation 'org.scala-lang:scala-library:2.13.0'
         }
     }
+
+    ext {
+        etcd_addr = 'http://msd-etcd:2379'
+        kafka_addr = 'msd-kafka:9092'
+        websrv_port = '5656'
+    }
+
 }

@@ -42,7 +42,7 @@ object StreamPlotter extends App {
   }
 
   val properties = new Properties()
-  properties.put("bootstrap.servers", "msd-kafka:9092")
+  properties.put("bootstrap.servers", sys.env("KAFKA_ADDR"))
   properties.put("group.id", "stream-generator")
 
   val clusterConsumer =

@@ -24,6 +24,11 @@ docker {
     }
 }
 
+dockerCreateDockerfile {
+    environmentVariable 'ETCD_ADDR', project.ext.etcd_addr
+    environmentVariable 'KAFKA_ADDR', project.ext.kafka_addr
+}
+
 dependencies {
     implementation 'org.apache.kafka:kafka-streams:2.2.0'
     implementation 'org.apache.kafka:kafka-clients:2.2.0'

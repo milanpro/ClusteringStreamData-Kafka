@@ -20,6 +20,11 @@ docker {
     }
 }
 
+dockerCreateDockerfile {
+    environmentVariable 'ETCD_ADDR', project.ext.etcd_addr
+    environmentVariable 'KAFKA_ADDR', project.ext.kafka_addr
+}
+
 application {
     mainClassName = 'DataGenerator'
 }
