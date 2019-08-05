@@ -14,6 +14,10 @@ import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 import scala.util.control.Breaks._
 
+/**
+  * (Deprecated) Point and cluster cell plotter
+  * Got replaced with the StreamWebServerFrontend
+  */
 object StreamPlotter extends App {
 
   def makeChart = {
@@ -106,7 +110,6 @@ object StreamPlotter extends App {
     val yValsPoints = ringBuffer.map(_.y).toArray
     val zValsPoints = ringBuffer.map(_ => 1D).toArray
 
-    //clustersFinal.values.foreach(cell => println(cell.timelyDensity))
     val xValsClusters = clustersFinal.values.map(_.seedPoint.x).toArray
     val yValsClusters = clustersFinal.values.map(_.seedPoint.y).toArray
     val zValsClusters =

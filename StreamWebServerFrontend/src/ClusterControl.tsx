@@ -50,6 +50,10 @@ const ValueControl = (props: {
   );
 };
 
+/**
+ * Controls values of clustering algorithm.
+ * TODO: Value sanitisation
+ */
 const ClusterControl = () => {
   return (
       <div style={{marginTop: "30px"}}>

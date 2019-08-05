@@ -16,7 +16,7 @@ repositories {
 docker {
     springBootApplication {
         baseImage = 'openjdk:8-jre-slim'
-        ports = [9092, 5656]
+        ports = [9092, project.ext.websrv_port.toInteger()]
         tag = 'gcr.io/msdclustering/webserver'
     }
 }

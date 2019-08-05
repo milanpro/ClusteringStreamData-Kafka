@@ -16,26 +16,24 @@ import types.point.Point
 import scala.Ordering.Double.TotalOrdering
 import scala.jdk.CollectionConverters._
 
-/*
- * https://docs.confluent.io/current/streams/developer-guide/processor-api.html#defining-a-stream-processor
- */
-
-/*
- * TODO: Choosing of a useful r
- */
-
+/**
+  * Processor that receives points from some topic and windows them into larger chunks of points.
+  * The processor then uses those chunks to update its cluster cell and emits those changes to a topic.
+  */
 class PointToClusterCellProcessor extends Processor[String, Point] {
 
+  // Etcd client setup
   val etcdClient = new EtcdManaged(sys.env("ETCD_ADDR"))
 
+  // Set default value on startup
   var r: Int = etcdClient.setValue("p2cc/radius", "10").toInt
-
   var a: Double = etcdClient.setValue("p2cc/decay", "0.898").toDouble
-
   var lambda: Int = etcdClient.setValue("p2cc/lambda", "1").toInt
 
+  // windowing time
   var steppingtime = 1
 
+  // decay for cluster cells
   def decay = scala.math.pow(a, lambda * steppingtime)
 
   private var context: ProcessorContext = _
@@ -52,7 +50,7 @@ class PointToClusterCellProcessor extends Processor[String, Point] {
       .getStateStore("point-buffer-store")
       .asInstanceOf[KeyValueStore[String, Point]]
 
-    val duration = Duration.of(1, ChronoUnit.SECONDS)
+    val duration = Duration.of(steppingtime, ChronoUnit.SECONDS)
 
     context.schedule(
       duration,
@@ -73,8 +71,12 @@ class PointToClusterCellProcessor extends Processor[String, Point] {
     })
   }
 
+  /**
+    * Processes all points in buffer as a chunk and decays cluster cells.
+    */
   private def processPoints =
     (_ => {
+      // Decay the timely density of all cluster cells
       clusterCells.all.asScala.foreach(
         cell =>
           clusterCells.put(
@@ -87,8 +89,12 @@ class PointToClusterCellProcessor extends Processor[String, Point] {
             )
         )
       )
+
+      // Extract points from buffer and calculate the resulting cluster cell using the paper algorithm.
       val points = pointBuffer.all.asScala
       points.foreach(point => processPoint(point.key, point.value))
+
+      // Update dependent cell and distance or delete cluster cell and emit changes on topic.
       clusterCells.all.asScala.foreach(cell => {
         if (cell.value.timelyDensity < 0.8) {
           clusterCells.delete(cell.key)
@@ -120,6 +126,7 @@ class PointToClusterCellProcessor extends Processor[String, Point] {
       context.commit()
     }): Punctuator
 
+  // Update cluster cells in regards to incoming point
   private def processPoint(key: String, value: Point): Unit = {
     val closestCell = clusterCells.all.asScala
       .map(cell => (cell, pointClusterCellDist(value, cell.value)))

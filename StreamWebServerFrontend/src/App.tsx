@@ -13,6 +13,9 @@ let clusterCellBuffer: KafkaClusterCellEvent[] = [];
 const App: React.FC = () => {
   const [canvasRef, setRef] = useState<null | HTMLCanvasElement>(null);
 
+  /**
+   * On application load, subscribe to all websocket endpoints and update the data.
+   */
   useEffect(() => {
     let pointSub: Stomp.StompSubscription;
     let clusterCellSub: Stomp.StompSubscription;
@@ -78,6 +81,9 @@ const App: React.FC = () => {
     };
   }, []);
 
+  /**
+   * On canvas ref render chart and update it in an interval
+   */
   useEffect(() => {
     if (canvasRef) {
       const ctx = canvasRef.getContext("2d");

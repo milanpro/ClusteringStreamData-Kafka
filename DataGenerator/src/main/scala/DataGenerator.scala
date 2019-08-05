@@ -7,8 +7,13 @@ import types.point.{Point, PointSerializer}
 
 import scala.util.Random
 
+/**
+  * The DataGenerator generates sample points and emits them into a kafka topic.
+  * Therefore it uses 3 set normal distribution, so that the data is clusterable.
+  */
 object DataGenerator extends App {
 
+  // Setup Kafka and the Etcd connection
   val properties = new Properties()
   properties.put("bootstrap.servers", sys.env("KAFKA_ADDR"))
   val etcdClient = new EtcdManaged(sys.env("ETCD_ADDR"))
@@ -19,6 +24,7 @@ object DataGenerator extends App {
   val kafkaProducer =
     new KafkaProducer[String, Point](properties, stringSer, pointSer)
 
+  // Create distributions
   var distributions: scala.collection.mutable.ListBuffer[
     ((Double, Double), (Double, Double))
   ] = scala.collection.mutable.ListBuffer.empty
@@ -32,8 +38,10 @@ object DataGenerator extends App {
   y = (10.0, 10.0)
   distributions.addOne((x, y))
 
+  // Delay between different point emits
   var pointDelay = etcdClient.setValue("gen/pointDelay", "10").toInt
 
+  // Start Etcd watches
   etcdClient.watchWithCb("gen/pointDelay", value => {
     pointDelay = value.toInt
   })
@@ -45,6 +53,7 @@ object DataGenerator extends App {
     distributions.addOne((x, y))
   })
 
+  // Start loop that emits points into the topic
   while (true) {
     val index = Random.nextInt(3)
     val distrib = distributions(index)
