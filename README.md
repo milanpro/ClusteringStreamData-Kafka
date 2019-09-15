@@ -43,24 +43,24 @@ The implementation is based on the paper “Clustering stream data by exploring 
 
 The proposed algorithm for clustering stream based data belongs to the density based clustering algorithms, as well as DBSCAN for example.
 
-So the base property calculated used for the clustering is the _Local Density _⍴:
+So the base property calculated used for the clustering is the _Local Density_ ⍴:
 
 
-![alt_text](images/-MSD19-Ausarbeitung0.png "image_tooltip")
+![alt_text](images/formula_1.png)
 
 
 This describes the number of close points in regards to p<sub>i</sub>.
 
-The second property necessary is the _Dependent Distance _δ:
+The second property necessary is the _Dependent Distance_ δ:
 
 
-![alt_text](images/-MSD19-Ausarbeitung1.png "image_tooltip")
+![alt_text](images/formula_2.png)
 
 
-Delta describes the smallest distance to a point with a higher density. The root point has therefore no delta. Using those definitions, it is possible to build a _Maximal Strongly Dependent SubTree _like the following:
+Delta describes the smallest distance to a point with a higher density. The root point has therefore no delta. Using those definitions, it is possible to build a _Maximal Strongly Dependent SubTree_ like the following:
 
 
-![alt_text](images/-MSD19-Ausarbeitung2.png "image_tooltip")
+![alt_text](images/original_paper_tree.png)
 
 
 The arrows show the _Dependent Distance_ and to which those nodes are dependent. Using the thresholds τ and ξ clusters can now easily be determined. With a few adjustments this algorithm can already be used in a streaming context. Just two parts of the algorithm have to be adjusted to be fully streaming compatible.
@@ -68,18 +68,18 @@ The arrows show the _Dependent Distance_ and to which those nodes are dependent.
 First there has to be some kind of decay so that newer points are worth more than older points. So the authors of the paper defined a freshness model to decay the local density like so:
 
 
-![alt_text](images/-MSD19-Ausarbeitung3.png "image_tooltip")
+![alt_text](images/formula_3.png)
 
 
-Because the time window and a as well as λ are set, the decay factor f_i^t is a constant. This decaying constant is multiplied with the _Local Density _on every time window and since the decay factor must be smaller than one the _Local Density_ decays over time. Therefore the _Local Density _including the decay are called _Timely Density_.
+Because the time window and a as well as λ are set, the decay factor f_i^t is a constant. This decaying constant is multiplied with the _Local Density_ on every time window and since the decay factor must be smaller than one the _Local Density_ decays over time. Therefore the _Local Density_ including the decay are called _Timely Density_.
 
-The other adjustment tries to minimize the memory consumption by summarizing incoming points in so called _Cluster Cells. _ Cluster Cells hold the same properties like points would, including timely density, a position called the seed point and a dependent distance to the closest Cluster Cell with a higher timely density. If a new point event occurs, the closest Cluster Cell will be found and if the following condition is true, than the Cluster Cells timely density will be increased by one and otherwise a new Cluster Cell with a timely density of one will be created.
-
-
-![alt_text](images/-MSD19-Ausarbeitung4.png "image_tooltip")
+The other adjustment tries to minimize the memory consumption by summarizing incoming points in so called _Cluster Cells_. Cluster Cells hold the same properties like points would, including timely density, a position called the seed point and a dependent distance to the closest Cluster Cell with a higher timely density. If a new point event occurs, the closest Cluster Cell will be found and if the following condition is true, than the Cluster Cells timely density will be increased by one and otherwise a new Cluster Cell with a timely density of one will be created.
 
 
-So _r _regulates how many Cluster Cells are appearing. The impact of changing timely densities over time and over new points, rearranges the Cluster Cells of the DPTree and therefore recalculates Clusters. The point to Cluster Cell process and the Cluster Cell to tree and clustering process can be split and processed separately.
+![alt_text](images/formula_4.png)
+
+
+So _r_ regulates how many Cluster Cells are appearing. The impact of changing timely densities over time and over new points, rearranges the Cluster Cells of the DPTree and therefore recalculates Clusters. The point to Cluster Cell process and the Cluster Cell to tree and clustering process can be split and processed separately.
 
 
 ## Technologies and Architecture
@@ -87,7 +87,7 @@ So _r _regulates how many Cluster Cells are appearing. The impact of changing ti
 This section will give a broad overview of the project architecture and the different technologies used. A short overview of the stack and used frameworks can be seen in the following image
 
 
-![alt_text](images/-MSD19-Ausarbeitung5.png "image_tooltip")
+![alt_text](images/technologies.png)
 
 
 
@@ -101,7 +101,7 @@ The full technology stack of this clustering processor consists of many differen
 The following image contains a brief overview of the Kubernetes based project architecture.
 
 
-![alt_text](images/-MSD19-Ausarbeitung6.png "image_tooltip")
+![alt_text](images/k8s_architecture.png)
 
 
 The core of the project is a Kafka and Zookeeper Deployment with up to 3 replicas that is exposed through a K8S service. This service is then used by all of the Kafka-Streams Deployments to fetch and process their assigned topics.
@@ -113,10 +113,10 @@ Additionally a Spring Boot web server is Deployed behind an Ingress Service that
 The following Diagram shows the data flow of a single point through the different Kafka Topics and Processors, used in our deployment, until a final Cluster Cell is produced and emitted via the WebSocket. The different Processors will be explained in more detail later in the Paper.
 
 
-![alt_text](images/-MSD19-Ausarbeitung7.png "image_tooltip")
+![alt_text](images/kafka_pipeline.png)
 
 
-For central configuration management we deploy a _ETCD _distributed KV store with change notification support in the Kubernetes Cluster, this allows us to dynamically update configuration parameters of the processor without needing to redeploy or restart the pipeline which allows for fast and responsive tuning of the different parameters to the algorithm with visual support.
+For central configuration management we deploy a _ETCD_ distributed KV store with change notification support in the Kubernetes Cluster, this allows us to dynamically update configuration parameters of the processor without needing to redeploy or restart the pipeline which allows for fast and responsive tuning of the different parameters to the algorithm with visual support.
 
 
 ## Points to Cluster Cell Processor
@@ -170,7 +170,7 @@ The Pipeline keeps a global store of all currently existing Cluster Cells, this 
 The following image also gives a short overview over the n-second based part of the Algorithm during execution.
 
 
-![alt_text](images/-MSD19-Ausarbeitung8.png "image_tooltip")
+![alt_text](images/p2cc.png)
 
 
 
@@ -223,7 +223,7 @@ With this setup we are able to connect with any client running a current browser
 This is visible in the following picture which shows the visualization of our data. The light red points show the positions of the emitted points. The blue, green and red points are Cluster Cells including their timely density, which is visible via the grey circles around them. The larger the circle around the cell, the tighter packed are the points in its area. The color of the Cluster Cells determines which Cluster they belong to, so that there are three clusters. The green, the red and the blue.
 
 
-![alt_text](images/-MSD19-Ausarbeitung9.png "image_tooltip")
+![alt_text](images/clusters_visualized.png)
 
 
 Additionally we added a possibility to change constants necessary for the clustering (i.e. ξ or the decay factor λ). Using _ETCD_ we are able to change those values in the frontend and the changes propagate through to the service using those values in real time. This helped evaluating the correctness of our stream based clustering implementation because we can change data generation parameters in real time and for example move any cluster where we want it to appear.
