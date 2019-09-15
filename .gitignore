@@ -189,3 +189,5 @@ gradle-app.setting
 **/.settings
 
 .bloop/
+
+.DS_Store
