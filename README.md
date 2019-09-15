@@ -223,10 +223,6 @@ With this setup we are able to connect with any client running a current browser
 This is visible in the following picture which shows the visualization of our data. The light red points show the positions of the emitted points. The blue, green and red points are Cluster Cells including their timely density, which is visible via the grey circles around them. The larger the circle around the cell, the tighter packed are the points in its area. The color of the Cluster Cells determines which Cluster they belong to, so that there are three clusters. The green, the red and the blue.
 
 
-
-<p id="gdcalert11" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/-MSD19-Ausarbeitung9.png). Store image on your image server and adjust path/filename if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert12">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
 ![alt_text](images/-MSD19-Ausarbeitung9.png "image_tooltip")
 
 
